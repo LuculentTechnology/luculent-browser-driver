@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: mailto:security@luculent.dev
+    about: Please report security issues privately (see SECURITY.md).
+  - name: Luculent beta
+    url: https://luculent.dev/beta
+    about: Agent quality control for teams that ship with AI.

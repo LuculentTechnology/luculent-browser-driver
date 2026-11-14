@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Luculent Browser Driver for AI Agents</title><style>
+body{font:13px system-ui,sans-serif;margin:0;padding:14px;width:300px;background:#0b0b0f;color:#e5e7eb}
+h1{font-size:14px;margin:0 0 10px} .row{display:flex;justify-content:space-between;align-items:center;margin:6px 0}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+button{width:100%;padding:8px;border:0;border-radius:8px;margin-top:8px;cursor:pointer;font-weight:600}
+#kill{background:#dc2626;color:#fff;font-size:15px;padding:12px} #kill.resume{background:#16a34a}
+.sec{border-top:1px solid #27272a;margin-top:10px;padding-top:8px} .sec h2{font-size:12px;color:#9ca3af;margin:0 0 4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+#rc,#grant{background:#27272a;color:#e5e7eb} #grant.on{background:#4f46e5}
+small{color:#9ca3af} label{display:flex;justify-content:space-between;align-items:center;margin:5px 0;cursor:pointer}
+.modes{display:flex;gap:6px;margin:0 0 10px}.modes:empty,.modes.single{display:none}.modes button{width:auto;margin:0;padding:4px 10px;background:#27272a;color:#e5e7eb;font-weight:500}.modes button.on{background:#4f46e5}
+.pend{background:#422006;border:1px solid #f59e0b;border-radius:8px;padding:8px;margin:6px 0}.pend b{color:#fcd34d}.pend .btns{display:flex;gap:6px}.pend button{margin-top:6px;padding:6px}
+.ok{background:#16a34a;color:#fff}.no{background:#3f3f46;color:#fff}
+#log{max-height:120px;overflow:auto;font-size:11px;line-height:1.45} #log div{border-bottom:1px solid #18181b;padding:2px 0} .denied{color:#fca5a5}
+a{color:#a5b4fc;text-decoration:none} .pb{margin:12px 0 0;text-align:center;border-top:1px solid #27272a;padding-top:10px;font-size:12px}
+</style></head><body>
+<h1>Luculent Browser Driver <small>for AI Agents</small></h1>
+<nav id="modes" class="modes"></nav>
+<section data-mode="driver">
+<button id="kill">Killswitch: stop all agents</button>
+<div class="row"><span>Relay</span><span id="st">.</span></div>
+<div class="row"><span>Tabs under agent control</span><span id="at">0</span></div>
+<div id="pending"></div>
+<div class="sec"><h2>This tab</h2>
+<button id="grant">Let agents use this tab</button>
+<small id="grantNote"></small></div>
+<div class="sec"><h2>Quick security</h2>
+<label>Read-only mode (no clicks or typing) <input type="checkbox" id="q_readOnly"></label>
+<label>Let agents read and type passwords <input type="checkbox" id="q_passwords"></label>
+<label>Let agents run JavaScript <input type="checkbox" id="q_eval"></label>
+<a href="#" id="opts">All security settings and full activity log</a></div>
+<div class="sec"><h2>Recent agent activity</h2><div id="log"><small>Nothing yet.</small></div></div>
+<button id="rc">Reconnect to relay</button>
+<div class="sec" id="bannerSec">
+<a href="#" id="bannerHelp">What is this banner?</a>
+<p id="bannerExplain" hidden style="margin:8px 0 0;color:#d1d5db;line-height:1.45"></p>
+</div>
+<button id="chat" style="background:#4f46e5;color:#fff">Open chat panel</button>
+<button id="setup" style="background:#27272a;color:#e5e7eb">Set up agents</button>
+
+</section>
+<p class="pb"><a href="https://luculent.dev/beta?utm_source=browser-driver&utm_medium=extension" target="_blank" rel="noopener">Built by <b>Luculent</b>. Join the beta</a></p>
+<script type="module" src="popup.js"></script>
+</body></html>

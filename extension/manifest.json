@@ -1,0 +1,63 @@
+{
+  "manifest_version": 3,
+  "name": "Luculent Browser Driver for AI Agents",
+  "version": "0.3.0",
+  "description": "Let any AI agent drive Chrome via API/MCP \u2014 fast, secure, no reconnects. Killswitch, per-tab grants, password guard. Free.",
+  "homepage_url": "https://luculent.dev/beta",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA06AlwYA6e0YPocsCx8HBooy0XQCyERUZGYI5tG0LhULtEgHu2lsTQP/apQcf2CxNegUQRzEg7m2dHKhlQagEP2DU1n9vBCXkFb9C+oKrWPMecv/3lws+KDTSFuvPf8ibZtw6jbODcjJroUqvEtBcF7itTmxYgoQ1IWVh609+oNJ2Uk2QeLmhMmbepMWy94VNR103wQDMKRzoUiciBVfXosp4o/hCOx/rwmNJvV6BhSVKGAYU2eYu9I3AxrWat93gl6dfQ4liTjglplMw2QJnTUxd/WDZW7W5043qWLIp8VAzznnF3g3uZpqLWPZjvSPQX4WNRUfVmXi9+GNexzGw3wIDAQAB",
+  "minimum_chrome_version": "125",
+  "permissions": [
+    "debugger",
+    "tabs",
+    "storage",
+    "alarms",
+    "downloads",
+    "notifications",
+    "webNavigation",
+    "sidePanel",
+    "tabGroups",
+    "scripting"
+  ],
+  "background": {
+    "service_worker": "sw.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Luculent Browser Driver for AI Agents",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "short_name": "Luculent Driver",
+  "options_page": "options.html",
+  "commands": {
+    "killswitch": {
+      "suggested_key": {
+        "default": "Alt+Shift+K"
+      },
+      "description": "Killswitch: stop all AI agents"
+    },
+    "open-panel": {
+      "suggested_key": {
+        "default": "Alt+Shift+O"
+      },
+      "description": "Open the chat panel"
+    }
+  },
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "side_panel": {
+    "default_path": "panel.html"
+  }
+}

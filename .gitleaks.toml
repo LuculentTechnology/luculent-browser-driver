@@ -1,0 +1,10 @@
+# gitleaks config: default rules plus one reviewed false positive.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Chrome extension manifest 'key' is the extension's PUBLIC key (pins the unpacked extension ID); not a secret"
+condition = "AND"
+paths = ['''(^|/)extension/manifest\.json$''']
+regexTarget = "line"
+regexes = ['''^\s*"key"\s*:''']

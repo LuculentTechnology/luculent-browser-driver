@@ -1,0 +1,78 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Security settings - Luculent Browser Driver for AI Agents</title><style>
+body{font:14px system-ui,sans-serif;margin:0;background:#0b0b0f;color:#e5e7eb}
+main{max-width:760px;margin:0 auto;padding:24px}
+h1{font-size:20px;margin:0 0 4px} h2{font-size:15px;margin:22px 0 8px;color:#c7d2fe}
+p.lead{color:#9ca3af;margin:0 0 14px}
+.card{background:#111118;border:1px solid #27272a;border-radius:12px;padding:14px 16px}
+.r{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:8px 0;border-bottom:1px solid #1f1f27}.r:last-child{border:0}
+.r small{display:block;color:#9ca3af;font-size:12px;margin-top:2px}
+select,input[type=number],input[type=text],textarea{background:#18181b;color:#e5e7eb;border:1px solid #3f3f46;border-radius:6px;padding:6px}
+textarea{width:100%;box-sizing:border-box;min-height:70px;font:12px ui-monospace,monospace}
+button{padding:8px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:600;background:#27272a;color:#e5e7eb}
+#kill{background:#dc2626;color:#fff} #kill.resume{background:#16a34a}
+#log{max-height:360px;overflow:auto;font:12px ui-monospace,monospace} #log div{padding:3px 0;border-bottom:1px solid #18181b} .denied{color:#fca5a5}
+#tabs label{display:flex;gap:8px;align-items:center;padding:4px 0} a{color:#a5b4fc}
+#saved{color:#86efac;font-size:12px;margin-left:8px}
+</style></head><body><main>
+<h1>Luculent Browser Driver for AI Agents</h1>
+<p class="lead">Decide what connected AI agents may do in this browser. Changes save instantly and apply to every agent and API key. <span id="saved"></span></p>
+<div class="card"><div class="r"><div><b>Killswitch</b><small>Stops every agent, detaches every tab and refuses all commands until you resume. Shortcut: Alt+Shift+K.</small></div><button id="kill">Stop all agents</button></div></div>
+
+<h2>Which tabs</h2>
+<div class="card">
+<div class="r"><div>Agents can use<small>"Granted tabs" means only tabs you allow below or in the popup, plus tabs the agent opens itself.</small></div><select data-k="grantMode"><option value="granted">Granted tabs only (recommended)</option><option value="all">Every tab</option></select></div>
+<div class="r"><div>Incognito tabs<small>Off by default. Chrome also requires "Allow in Incognito" on the extension.</small></div><input type="checkbox" data-k="incognito"></div>
+<div id="tabs"></div>
+</div>
+
+<h2>What agents may do</h2>
+<div class="card">
+<div class="r"><div>Read-only mode<small>Agents can open pages, scroll and read, but cannot click, type, upload or run JavaScript.</small></div><input type="checkbox" data-k="readOnly"></div>
+<div class="r"><div>Passwords<small>"Block" hides password field values from agents and stops them typing into password fields.</small></div><select data-k="passwords" data-lv></select></div>
+<div class="r"><div>Submit login or payment forms<small>Also covers typing into card number / CVC fields.</small></div><select data-k="submitSensitive" data-lv></select></div>
+<div class="r"><div>Run JavaScript in pages<small>Lets an agent run any code in a page, which can read anything on it, including password fields.</small></div><select data-k="eval" data-lv></select></div>
+<div class="r"><div>Cookies<small>Read or change cookies (sign-in sessions live in cookies).</small></div><select data-k="cookies" data-lv></select></div>
+<div class="r"><div>Site storage<small>Read or change localStorage / sessionStorage.</small></div><select data-k="storage" data-lv></select></div>
+<div class="r"><div>Upload local files<small>Attach files from your computer to web forms. "Ask me" shows each file first.</small></div><select data-k="uploads" data-lv></select></div>
+<div class="r"><div>Downloads<small>Let pages an agent drives save files to your computer.</small></div><select data-k="downloads" data-lv2></select></div>
+<div class="r"><div>Browser-internal pages<small>chrome://, other extensions, DevTools. This extension's own pages are always off limits.</small></div><select data-k="internalPages" data-lv2></select></div>
+<div class="r"><div>Local files (file://)</div><select data-k="fileUrls" data-lv2></select></div>
+<div class="r"><div>Raw DevTools protocol<small>For advanced API keys with the cdp scope.</small></div><select data-k="rawCdp" data-lv></select></div>
+<div class="r"><div>Background (headless) Chrome</div><select data-k="headless" data-lv2></select></div>
+</div>
+
+<h2>Sites</h2>
+<div class="card">
+<div class="r"><div>Block banking and payment sites<small>Banks, card issuers, PayPal, Stripe, crypto exchanges and tax sites (about 50 domains plus any host containing "bank").</small></div><input type="checkbox" data-k="bankingPreset"></div>
+<div style="padding:8px 0"><b>Blocklist</b> <small>one host per line: example.com (includes subdomains), *.example.com, or /regex/</small><textarea data-k="blocklist" data-list></textarea></div>
+<div style="padding:8px 0"><b>Allowlist</b> <small>if not empty, agents can only use these sites</small><textarea data-k="allowlist" data-list></textarea></div>
+</div>
+
+<h2>Limits</h2>
+<div class="card">
+<div class="r"><div>Calls per second per agent key</div><input type="number" min="1" data-k="rateLimit.perSecond"></div>
+<div class="r"><div>Calls per minute per agent key</div><input type="number" min="1" data-k="rateLimit.perMinute"></div>
+<div class="r"><div>Approval timeout (seconds)<small>Unanswered approvals are declined.</small></div><input type="number" min="5" max="600" data-k="confirmTimeoutSec"></div>
+<div class="r"><div>Keep an activity log</div><input type="checkbox" data-k="audit"></div>
+</div>
+
+<h2>Activity log</h2>
+<div class="card"><div id="log"><small>Nothing yet.</small></div></div>
+
+<h2>Connection</h2>
+<div class="card">
+<div class="r"><div>Relay address<small>Default ws://127.0.0.1:47800/ext</small></div><input type="text" id="url" placeholder="ws://127.0.0.1:47800/ext" size="28"></div>
+<div class="r"><div>Relay pairing<small>The extension remembers the first relay it connects to and refuses any other program on that port. Re-pair only after reinstalling the relay.</small></div><button id="repair">Re-pair relay</button></div>
+</div>
+<p style="margin-top:24px;color:#9ca3af">Built by <a href="https://luculent.dev/beta?utm_source=browser-driver&utm_medium=options" target="_blank" rel="noopener">Luculent</a>. Join the beta.</p>
+</main><script type="module" src="options.js"></script>
+<div class="card" id="bannerCard" style="margin-top:16px">
+  <div><b>What is this banner?</b>
+  <small id="bannerExplain">Chrome sometimes shows a bar that says this extension "is debugging this browser." Chrome shows that bar for any extension that can control a window. It cannot be hidden. It only means an AI agent is allowed to control that window — not that your computer is being hacked, and not that anything is being sent off your machine. To stop it, press the killswitch in the popup (or Alt+Shift+K), or click Cancel on the banner.</small></div>
+</div>
+<script type="module">
+  import { BANNER_TEXT } from './banner.js';
+  document.getElementById('bannerExplain').textContent = BANNER_TEXT;
+</script>
+</body></html>

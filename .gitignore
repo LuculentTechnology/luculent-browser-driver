@@ -1,0 +1,5 @@
+node_modules/
+.playwright-mcp/
+dist/
+extension/config.json
+harness/out/

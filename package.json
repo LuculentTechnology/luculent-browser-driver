@@ -1,0 +1,39 @@
+{
+  "name": "luculent-browser-driver",
+  "version": "0.3.0",
+  "description": "Luculent Browser Driver for AI Agents: let any AI agent drive Chrome via a local API/MCP server. Fast batched actions, no reconnects, killswitch, per-tab grants, password guard.",
+  "type": "module",
+  "bin": {
+    "lbd": "src/cli.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/cli.mjs start",
+    "mcp": "node src/cli.mjs mcp",
+    "test": "node --test --test-concurrency=1 \"test/*.test.mjs\"",
+    "test:page-context": "node test/page-context-suite/suite.mjs",
+    "bench": "node bench/bench.mjs",
+    "package": "node scripts/package.mjs",
+    "assets": "node store/render-assets.mjs",
+    "test:page-context:live-llm": "node test/page-context-suite/suite.mjs --live-llm 1",
+    "test:page-context:default-ui": "node test/page-context-suite/default-ui.mjs",
+    "test:plan": "node test/plan-live.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.23.0"
+  },
+  "devDependencies": {
+    "@playwright/mcp": "^0.0.85"
+  },
+  "license": "MIT",
+  "homepage": "https://luculent.dev/beta",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dProFoSho/luculent-browser-driver.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dProFoSho/luculent-browser-driver/issues"
+  }
+}
