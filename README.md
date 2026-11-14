@@ -1,11 +1,10 @@
 # Luculent Browser Driver for AI Agents
 
-**Let any AI agent drive your Chrome through a local API or MCP server: up to 13x faster than Playwright MCP,
-no reconnects, and security controls you set.**
+Give your AI agent a browser tab. Luculent Browser Driver connects your agent to Chrome through a local API or MCP server. Batch a form or a sequence of clicks into one call, choose which tabs the agent can use, and stop it from the toolbar.
 
-> Built by [Luculent](https://luculent.dev): SOPs for AI agents. **[Join the beta at luculent.dev/beta](https://luculent.dev/beta)**
+The driver is free and open source. It’s built by [Luculent](https://luculent.dev), a toolkit for managing AI agents and keeping their work on procedure. **[Join the Luculent beta](https://luculent.dev/beta).**
 
-![Luculent Browser Driver: seven actions batched into one call](store/assets/screenshot-1-batched.png)
+![A local browser form and the five-action MCP request that filled it in one call, measured at 229 ms in this capture](store/assets/readme-browser-run.png)
 
 Claude Desktop, Cursor, Codex, Gemini CLI or your own script talk to one local relay with an API key. The relay
 drives your real Chrome tabs through a small MV3 extension, or a clean headless Chrome for background jobs.
