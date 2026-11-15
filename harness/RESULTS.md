@@ -14,13 +14,12 @@ Runs: Nov 13-14, 2026 (PT), Chromium 158 headless, default security policy excep
 |---|---|---|---|---|
 | Before (headless, Nov 13 10:50 PM PT) | 92 | 39 | 52 | 1 |
 | After, headless (Nov 13 11:48 PM PT) | 92 | **89** | **0** | 3 |
-| After, through the extension (Nov 13 11:59 PM PT) | 92 | **87** | 2* | 3 |
+| Extension initial run (Nov 13 11:59 PM PT) | 92 | 87 | 2 | 3 |
+| Extension coverage including focused reruns | 92 | **89** | **0** | 3 |
 
-\* `cookie-banner-modal` and `long-page-scroll-end` failed once under machine load and passed on two reruns
-(extension local fixtures alone: 37/37). Bot walls (reddit, eBay, Amazon, and CodePen's Cloudflare check in one
-extension run) are sites that serve a robot page to automated browsers; they are reported as "blocked", not passed.
+The initial extension run had two failures under load, `cookie-banner-modal` and `long-page-scroll-end`. Both passed on focused reruns, and all 37 local fixtures passed. The coverage row combines that evidence with the initial run. A new full run on the release candidate is pending. The three extension bot-wall cases remain blocked.
 
-### By category (before / after headless / after extension)
+### By category (before / after headless / extension initial run)
 | Category | Before | Headless | Extension | Cases |
 |---|---|---|---|---|
 | iframes (incl. cross-origin) | 1/4 | 4/4 | 4/4 | iframe-same, iframe-cross-origin, ti-iframe-tinymce, ti-nested-frames |

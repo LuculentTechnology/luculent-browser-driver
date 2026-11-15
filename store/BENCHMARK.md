@@ -7,16 +7,14 @@ guard, banking preset, JavaScript/cookies off, uploads ask first), except the pe
 per-action flow can fire 7 calls in under 0.2 s.
 
 ## Headline numbers
-| Flow | Luculent Browser Driver | Playwright MCP 0.0.85 | Speed-up |
+| Flow | Luculent Browser Driver | Playwright MCP 0.0.85 | Speed or size difference |
 |---|---|---|---|
-| 7-action sign-up form, batched in 1 call (headless) | **131 ms** | n/a (no batching) | **13x faster** (13.5x) than Playwright's 1,766 ms |
-| Same form, batched, driving a real tab through the extension | **159 ms** | n/a | **11x faster** |
-| Same form, one MCP call per action (headless) | **154 ms** (8 ms median per call) | 1,766 ms (52 ms median per call) | **11x faster** |
+| 7-action sign-up form (headless) | **131 ms** (batched) | 1,766 ms (one call per action) | **13× faster** |
+| Same form in an existing Chrome tab | **159 ms** (batched) | Not measured in extension mode | — |
 | 4-action search flow (results render after a ~150 ms delay in both), batched | **156 ms** | 1,121 ms per action | **7x faster** |
 | Data the agent has to read for the form | **0.8 KB** batched / 2.7 KB per action | 4.0 KB | **5x less** |
 
-Store-safe claims (rounded down): "Up to 13x faster than Playwright MCP on the same form", "11x faster in your own
-Chrome tab", "5x less data for the model to read".
+Store-safe claims (rounded down): "Up to 13× faster than Playwright MCP on the same headless form", "5× less data for the model to read". The existing-tab comparison requires a matched run.
 
 ## Full results
 | Driver | Form batched | Form per-action | Median ms/call | Form bytes (per-action) | Search batched | Search per-action |
