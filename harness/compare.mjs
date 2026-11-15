@@ -194,7 +194,14 @@ writeFileSync(join(extDir, 'config.json'), JSON.stringify({ relayUrl: `ws://127.
 const extBrowser = await HeadlessBrowser.launch({ chromePath: findPlaywrightChromium(), headless: true, extensionPath: extDir });
 for (let i = 0; i < 200 && !relay.router.ext; i++) await sleep(50);
 const extConnectMs = +(performance.now() - extCold0).toFixed(1);
-const extTab = (await relay.router.tabs()).tabs.find((t) => t.source === 'extension').tab;
+let extTab;
+for (let i = 0; i < 200; i++) {
+  const tabs = (await relay.router.tabs()).tabs || [];
+  const found = tabs.find((t) => t.source === 'extension');
+  if (found) { extTab = found.tab; break; }
+  await sleep(50);
+}
+if (!extTab) throw new Error('extension tab did not appear');
 
 // 1. MCP stdio (extension tab)
 const stdio0 = performance.now();
