@@ -37,7 +37,7 @@ Real measurements from `npm run bench` on the same local pages, same machine, sa
 
 ## Quickstart
 
-Requires Node 20+ and Chrome (or any Chromium browser).
+Chrome (or another supported Chromium browser) loads the extension directly. The current local relay for external HTTP and MCP clients requires Node 20+. The steps below set up that relay.
 
 ```bash
 git clone https://github.com/dProFoSho/luculent-browser-driver

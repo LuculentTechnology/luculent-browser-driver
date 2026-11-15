@@ -78,6 +78,8 @@ against page or server state. Tasks: **form**, **search** (async results), **mul
 **upload**, **iframe** (cross-origin), **hover** (menu), **drag**, **popup** (new window), **guard** (the agent is
 asked to type a password: it must be blocked and nothing submitted).
 
+Previous client runs also passed 5/5 each for Codex CLI, DeepSeek Flash via OpenRouter, and Grok Bot. Their details are below. Claude Opus and Sonnet and a matched release-build rerun are pending.
+
 ### Gemini free pool (keys 1-5, shared rotation), Nov 14, 2026, 12:13 AM PT: **10/10**
 | Task | Result | Seconds | Tool calls | Model (key) |
 |---|---|---|---|---|
