@@ -4,7 +4,7 @@ Give your AI agent a browser tab. Luculent Browser Driver connects your agent to
 
 The driver is free and open source. It’s built by [Luculent](https://luculent.dev), a toolkit for managing AI agents and keeping their work on procedure. **[Join the Luculent beta](https://luculent.dev/beta).**
 
-![A local browser form and the five-action MCP request that filled it in one call, measured at 229 ms in this capture](store/assets/readme-browser-run.png)
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="store/assets/readme-browser-run-still.png"><img src="store/assets/readme-browser-run.png" alt="Illustrated replay of five browser actions on a Luculent sample site: open the form, fill the name and email, select Pro, and check the terms. The original batch took 229 ms. A slower replay shows each action."></picture>
 
 Claude Desktop, Cursor, Codex, Gemini CLI or your own script talk to one local relay with an API key. The relay
 drives your real Chrome tabs through a small MV3 extension, or a clean headless Chrome for background jobs.
@@ -28,11 +28,10 @@ agent --MCP / HTTP / WebSocket + API key--> relay (127.0.0.1:47800) --WebSocket-
 Real measurements from `npm run bench` on the same local pages, same machine, same MCP stdio transport (median of
 7 runs; model thinking time excluded for both). Full method: [store/BENCHMARK.md](store/BENCHMARK.md).
 
-| Flow (local test page) | Luculent Browser Driver | Playwright MCP 0.0.85 | |
+| Flow (local test page) | Luculent Browser Driver | Playwright MCP 0.0.85 | Speed or size difference |
 |---|---|---|---|
 | 7-action sign-up form, batched in one call (headless) | **131 ms** | 1,766 ms (one call per action) | **13x faster** |
-| Same form in your own Chrome tab, through the extension | **159 ms** | n/a | **11x faster** |
-| Same form, one MCP call per action | **154 ms** (8 ms/call) | 1,766 ms (52 ms/call) | **11x faster** |
+| Same form in your own Chrome tab, through the extension | **159 ms** | Not measured in this configuration | — |
 | 4-action search with a delayed result, batched | **156 ms** | 1,121 ms | **7x faster** |
 | Text the model has to read for the form | **0.8 KB** | 4.0 KB | **5x less** |
 
