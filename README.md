@@ -1,4 +1,4 @@
-# <picture><source media="(prefers-color-scheme: dark)" srcset="store/assets/luculent-lockup-horizontal.svg"><source media="(prefers-color-scheme: light)" srcset="store/assets/luculent-lockup-horizontal-on-light.svg"><img src="store/assets/luculent-lockup-horizontal.svg" width="156" height="39" alt="Luculent" align="absmiddle"></picture> Browser Driver for AI Agents
+# <picture><source media="(prefers-color-scheme: dark)" srcset="store/assets/luculent-lockup-readme.svg"><source media="(prefers-color-scheme: light)" srcset="store/assets/luculent-lockup-readme-on-light.svg"><img src="store/assets/luculent-lockup-readme.svg" width="156" height="39" alt="Luculent" align="absmiddle"></picture> Browser Driver for AI Agents
 
 Give your AI agent a browser tab. Luculent Browser Driver connects your agent to Chrome through a local API or MCP server. Batch a form or a sequence of clicks into one call, choose which tabs the agent can use, and stop it from the toolbar.
 
