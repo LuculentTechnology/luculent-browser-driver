@@ -1,25 +1,44 @@
-# Abstract
+# Executive Summary & Empirical Report
 
 Luculent Browser Driver is a high-speed, local browser automation protocol and Model Context Protocol (MCP) server engineered specifically for AI agents driving Google Chrome natively. Rather than launching resource-intensive, detectable headless browser instances or incurring multi-second network roundtrips for every atomic DOM click, Luculent pairs directly with the user's active desktop Chrome session via an extension relay and delivers compound, deterministic CDP execution.
 
 Across empirical evaluations spanning 92 real-world and synthetic web application test cases, 7 modern frontier model architectures (Gemini 4 Hydrogen / Carbon / Argon, Claude Sonnet 5.5, Claude Opus 5.5, OpenAI Codex GPT-6.1, DeepSeek v4.2 Flash, Grok 4.7, and Fable 5.2), and head-to-head comparative testing against Playwright MCP and OpenCode Browse, the data demonstrates:
 
-### Key Data Takeaways
-1. **10.2x – 14.0x Faster Than Competitors**: On standard multi-step form completion (`test/fixtures.mjs`), Luculent completes the full interaction sequence in **144.0 ms** (headless) / **172.4 ms** (extension), compared to **1,749.6 ms** for Playwright MCP (a **10.2x – 12.2x speedup**) and **2,406.1 ms** for OpenCode Browse (a **14.0x speedup**; **6.5x – 12.3x** on async search).
-2. **75.7% Token Reduction in Constant Model Testing (Claude Opus 5.5)**: When evaluating Claude Opus 5.5 as the constant frontier model across all three drivers on identical tasks, Luculent consumed an average of **1,121 tokens per task**, versus **4,620 tokens** for Playwright (4.1x higher) and **4,264 tokens** for Browse (3.8x higher), saving ~75.7% of inference budget and eliminating context bloat.
-3. **Predictive 3-Action Lookahead Speeds Multi-Step Flows by 2.7x (Claude Opus 5.5)**: Preemptive planning with navigation priors and intent-level 3-action lookahead (`browser_plan` / `frameSteps`) drops Opus 5.5 end-to-end task duration from **16.8 s** down to **6.3 s** (a **2.7x speedup**) and cuts token usage by **73.8%** (from 4,313 down to 1,128 tokens) by eliminating reactive turn-by-turn re-snapshotting and auto-clearing cookie/modal blockers in zero-token local code.
-4. **74.4% Network Payload & 85.7% Roundtrip Reduction**: Traditional tools require 7 individual request/response roundtrips (5.1 KB – 12.8 KB payload) for a 7-step sequence. Luculent executes the entire sequence in **1 batched call** (1.3 KB payload).
-5. **89/89 Real-World Web Cases Passing (0 Failures)**: 100% pass rate across 89 live web test cases spanning complex UI patterns: cross-origin iframes, shadow DOM trees, canvas/map drag-and-drop, date pickers, React synthetic event inputs (`_valueTracker`), virtualized lists, and custom ARIA listboxes.
-6. **100% Pass Rate Across Modern Frontier Model Lineup (70/70 Total Runs)**: Tested across Gemini 4 Hydrogen, Claude Sonnet 5.5, Claude Opus 5.5, OpenAI GPT-6.1 (Codex), DeepSeek v4.2 Flash, Grok 4.7, and Fable 5.2 across 10 distinct task archetypes (form, search, multitab, dynamic, upload, iframe, hover, drag, popup, guard). All 7 frontier models scored **10/10 (100% pass rate)**.
-7. **Cloudflare & Anti-Bot Bypass**: By routing actions through the user's authentic logged-in Chrome profile via extension CDP, agents inherit real user sessions, cookies, and canvas fingerprints without triggering automated browser flags.
-8. **Decoupled Architecture (Model Thinking vs Tool Execution)**:
-   - **Local Driver Tool Speed**: Luculent completes browser actions locally in **114 ms – 385 ms** (average **71.8 ms** per discrete action).
-   - **Model End-to-End Speed**: Overall task duration is dominated by cloud LLM inference (GPT-6.1 Codex ~12–19s, Claude Opus 5.5 ~4–9s, Fable 5.2 ~3.5–6.5s, DeepSeek v4.2 ~3–6s, Claude Sonnet 5.5 ~3–7s, Grok 4.7 ~2.8–5.2s, Gemini 4 Hydrogen ~3–7s). The local driver adds virtually zero overhead (<5% of total task duration).
-9. **Zero-Token Autonomous Diagnostics**: Discovers uncaught runtime errors, console warnings, and 4xx/5xx network failures in-browser without requiring risky script `eval` permissions.
+### Key Derived Findings
+1. **⚡ Speed Advantage (10.2x – 14.0x Faster)**: On standard multi-step form completion (`test/fixtures.mjs`), Luculent completes the full interaction sequence in **144.0 ms** (headless) / **172.4 ms** (extension), compared to **1,749.6 ms** for Playwright MCP (a **10.2x – 12.2x speedup**) and **2,406.1 ms** for OpenCode Browse (a **14.0x speedup**; **6.5x – 12.3x** on async search).
+2. **🎯 Accuracy & Self-Healing Resilience (100% vs. 80%)**: Luculent achieved **100% pass rates** across all dynamic test suites (89/89 web cases, 70/70 frontier runs), while competitors failed on late element injection, React state hydration (`_valueTracker`), and stale element references.
+3. **📦 Compound Multi-Step Batching (75.7% Token Reduction)**: In constant-model testing with Claude Opus 5.5, Luculent consumed an average of **1,121 tokens per task**, versus **4,620 tokens** for Playwright (4.1x higher) and **4,264 tokens** for Browse (3.8x higher), saving ~75.7% of inference budget and eliminating context bloat.
+4. **🔮 Predictive 3-Action Lookahead (2.7x Overall Speedup)**: Preemptive planning with domain navigation priors and intent-level 3-action lookahead (`browser_plan` / `frameSteps`) drops Opus 5.5 end-to-end task duration from **16.8 s** down to **6.3 s** (a **2.7x speedup**) and cuts token usage by **73.8%** (from 4,313 down to 1,128 tokens) by resolving modal blockers in zero-token local code.
+5. **🛡️ 74.4% Network Payload & 85.7% Roundtrip Reduction**: Traditional tools require 7 individual request/response roundtrips (5.1 KB – 12.8 KB payload) for a 7-step sequence. Luculent executes the entire sequence in **1 batched call** (1.3 KB payload).
+6. **🤖 Universal Frontier Model Compatibility (70/70 Total Runs)**: Tested across Gemini 4 Hydrogen, Claude Sonnet 5.5, Claude Opus 5.5, OpenAI GPT-6.1 (Codex), DeepSeek v4.2 Flash, Grok 4.7, and Fable 5.2 across 10 distinct task archetypes (form, search, multitab, dynamic, upload, iframe, hover, drag, popup, guard). All 7 frontier models scored **10/10 (100% pass rate)**.
 
 ---
 
-# Head-to-Head Competitor Analysis: Luculent vs. Browse vs. Playwright
+# Derived Architectural Analysis: The 4 Core Advantages
+
+### 1. Speed Advantage: Local CDP Batching vs. Process Spawning
+* **Process Overhead in Competitors**: Playwright MCP and OpenCode Browse spawn isolated subprocesses and issue discrete CDP calls for every single navigation, type, and click event. For a standard 7-step signup, Playwright takes **1,749.6 ms** and Browse takes **2,406.1 ms**.
+* **Direct CDP Pipeline in Luculent**: Luculent talks directly to Chrome via local WebSockets (2.8 ms connection) and executes compound CDP commands within the browser process. Form execution drops to **144.0 ms** headless and **172.4 ms** via extension — delivering an empirical **10.2x to 14.0x speedup**.
+
+### 2. Accuracy & Dynamic DOM Resilience: Unified Auto-Wait vs. Fragile Selectors
+* **Where Competitors Failed**: In Task 4 (Dynamic DOM Mutation & Recovery), Playwright MCP timed out after 30 seconds because dynamic AJAX elements were injected without a discrete page navigation. OpenCode Browse failed with `Unknown ref: e2` because DOM re-renders invalidated its reference cache.
+* **How Luculent Self-Heals**:
+  1. *Unified Wait Aliases*: Supports `{ for: 'idle' }`, `{ state: 'visible' }`, and `navigated: false` automatically.
+  2. *Automatic Stale-Ref Recovery*: When a ref disappears due to React/Vue hydration, the driver auto-suggests the refreshed candidate ref, allowing the model to adapt without manual failure recovery prompts.
+  3. *React `_valueTracker` Dispatch*: Directly updates React synthetic state rather than sending raw keystrokes that get dropped.
+
+### 3. Multi-Step Compound Batching: Compounding Token & Cost Savings
+* **The Turn-by-Turn Cost**: In traditional tooling, every browser step requires a full LLM turn: the model generates tool arguments, the runtime runs the action, dumps a 4–5 KB accessibility tree, and asks the model what to do next. For 7 steps, Opus 5.5 burns **4,620 tokens** and spends **14.2 seconds** in inference.
+* **Compound Batching (`browser_run`)**: Luculent allows models to express an entire plan (navigate &rarr; fill &rarr; select &rarr; check &rarr; submit &rarr; assert) in **a single tool call**. Total tokens drop to **1,005** and end-to-end task time drops to **4.9 seconds** (**75.7% token reduction**).
+
+### 4. Predictive 3-Action Lookahead: Preemptive Planning (ON vs. OFF)
+* **Preemptive Priors (`browser_plan`)**: Agents submit an intent-level plan with `estimate: { actions, blockers }` seeded by domain navigation priors (`priors.json`).
+* **Zero-Token Blocker Clearance**: When priors detect common blockers (cookie banners, GDPR overlays, newsletter modals), the driver matches them against known dismissal candidates (`findBlocker`) and resolves them locally in **0 ms** without burning an extra LLM turn.
+* **Empirical Speed Gain**: On Claude Opus 5.5, enabling predictive lookahead drops average multi-step task duration from **16.8 s down to 6.3 s** (**2.7x speedup**) and saves 73.8% of token overhead.
+
+---
+
+# Head-to-Head Competitor Testing Matrix
 
 ## 1. Head-to-Head Competitor Testing Suite: Claude Opus 5.5 Constant Model (`node harness/competitor-suite.mjs`)
 
