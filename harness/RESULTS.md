@@ -102,7 +102,20 @@ Rotation fixes (the runs used to die on a model with no allowed calls instead of
   doesn't poison the shared cooldowns other jobs use;
 * rotation helper errors are logged instead of silently reading as "all keys cooling".
 
+### Tool-only baseline for shared fixtures (Nov 14, 2026)
+
+Median of seven timed runs after one warm-up. Luculent Browser Driver used a Chrome extension attached to a real tab. The timer runs from the MCP request write through response parse, after initialization.
+
+| Tool-only run | Form | Delayed search |
+|---|---:|---:|
+| Luculent Browser Driver, existing Chrome tab (MCP stdio, batched) | 159 ms | 174 ms |
+
+The scripted baseline excludes model time. Matched existing-tab measurements for Playwright MCP, OpenCode Browse and Kimi Browser Extension are pending. A headless comparison is recorded separately in [the benchmark report](../store/BENCHMARK.md).
+
 ### Earlier 5-task run (Nov 13, 2026)
+
+Each cell shows result, duration and tool calls. Codex CLI uses client wall time from before process startup to the final reply. DeepSeek uses model-client wall time. Grok Bot uses local HTTP MCP tool time only. The durations have different timing boundaries and cannot rank agent speed. ChatGPT was not measured in this run.
+
 | Client | form | search | multitab | dynamic | upload | Total |
 |---|---|---|---|---|---|---|
 | Codex CLI 0.164 (MCP over HTTP, bearer key) | PASS 16.5 s / 2 | PASS 15.5 s / 2 | PASS 14.8 s / 4 | PASS 11.9 s / 2 | PASS 19.3 s / 2 | **5/5** |
