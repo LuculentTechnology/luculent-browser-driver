@@ -106,26 +106,50 @@ Real measurements from `npm run bench` on the same local pages, same machine, sa
 | 4-action search with delayed result, batched | **171.0 ms** | 1,109.2 ms | 2,101.1 ms | **6.5x – 12.3x faster** |
 | Payload the model has to read for the form | **1.3 KB** | 5.1 KB | 8.2 KB | **3.9x – 6.3x less** |
 
-## Quickstart
+## Quickstart (Zero-Dependency Auto-Install)
 
-Requires Node 20+ and Chrome (or any Chromium browser).
+No Node.js or manual runtime setup required — any needed dependencies install automatically in the background.
 
-```bash
-git clone https://github.com/dProFoSho/luculent-browser-driver
-cd luculent-browser-driver
-npm install
+### 1. Install the Chrome Extension
+Install **Luculent Browser Driver for AI Agents** directly from the **[Chrome Web Store](https://chromewebstore.google.com/search/Luculent%20Browser%20Driver%20for%20AI%20Agents)** (or load the `extension` folder unpacked in Developer Mode). **The extension itself runs entirely inside Chrome with zero extra software required.**
+
+### 2. Auto-Install & Start the Local Agent Relay
+Run the 1-line auto-installer for your operating system. It automatically installs a portable background runtime (if you don't already have one), configures the global `lbd` command, sets up the local relay, and mints your agent API key:
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.ps1 | iex
 ```
 
-1. **Load the extension:** open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and pick
-   the `extension` folder (or install it from the Chrome Web Store).
-2. **Start the relay:** `node src/cli.mjs start` (`node src/cli.mjs status` shows whether the extension connected).
-3. **Mint an API key per agent:** `node src/cli.mjs keys mint --name my-agent`. The `lbd_...` key is shown once and
-   stored hashed in `~/.luculent/browser-driver/`.
-4. **Grant a tab:** open the extension popup on a tab and choose **Let agents use this tab**. Tabs an agent opens
-   itself are granted automatically.
-5. **Connect your agent** with one of the snippets below.
+**macOS / Linux (Terminal):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.sh | bash
+```
 
-More detail, including the CLI and HTTP API: [QUICKSTART.md](QUICKSTART.md).
+**If you already have Node / npx installed:**
+```bash
+npx luculent-browser-driver start
+```
+
+### 3. Grant a Tab
+Open any Chrome tab you want an agent to drive, click the **Luculent** extension icon in your toolbar, and choose **Let agents use this tab**. Tabs an agent creates itself are granted automatically.
+
+### 4. Connect Your Agent
+Use `lbd start` to run the relay, and point your MCP client or agent to `http://127.0.0.1:47800/mcp`.
+
+<details>
+<summary><b>Manual Development from Source (for contributors)</b></summary>
+
+If you want to hack on the driver source code directly:
+```bash
+git clone https://github.com/LuculentTechnology/luculent-browser-driver
+cd luculent-browser-driver
+npm install
+node src/cli.mjs start
+```
+</details>
+
+More detail, including the CLI flags and HTTP endpoints: [QUICKSTART.md](QUICKSTART.md).
 
 ## Connect your agent
 

@@ -8,12 +8,32 @@ agent --MCP/HTTP/WS + API key--> relay (127.0.0.1:47800) --WebSocket--> extensio
                                           \--------------- CDP ---------------> headless Chrome (background jobs)
 ```
 
-## 1. Install (once)
+## 1. Quick Install (Automated Dependencies)
 
-Requires Node 20+.
+No Node.js or manual runtime configuration needed. Dependencies install automatically.
 
+### Option A: 1-Line Zero-Dependency Auto-Installer (Recommended)
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.ps1 | iex
+```
+
+**macOS / Linux (Terminal):**
 ```bash
-git clone https://github.com/dProFoSho/luculent-browser-driver
+curl -fsSL https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.sh | bash
+```
+
+*This automatically checks for a compatible Node runtime, installs a background portable runtime if one is missing, stages the driver, places `lbd` on your PATH, and mints your initial API key.*
+
+### Option B: If you already have Node.js / npx
+```bash
+npx luculent-browser-driver start
+```
+
+### Option C: Manual Source Setup (for Contributors)
+```bash
+git clone https://github.com/LuculentTechnology/luculent-browser-driver
 cd luculent-browser-driver
 npm install
 ```
