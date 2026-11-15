@@ -9,6 +9,8 @@ import { Relay, DEFAULT_PORT } from './relay.mjs';
 import { runStdio } from './mcp-stdio.mjs';
 import { HeadlessBrowser, findChrome, findPlaywrightChromium } from './headless.mjs';
 import { setup, CLIENTS } from './onboard.mjs';
+import { CONSENT_TITLE, CONSENT_BODY, PRIVACY_POLICY_URL, regionDefaultOn } from './meta.mjs';
+import { MetaHub } from './meta-buffer.mjs';
 import { resolveKey } from './mcp-stdio.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -138,6 +140,17 @@ switch (cmd) {
     for (const w of r.written) console.log('  ' + w.client + '  ' + w.path);
     if (r.task) console.log('Logon task: ' + (r.task.dryRun ? 'dry-run ' : '') + (r.task.name || 'Luculent Browser Driver Relay') + (r.task.installed ? ' installed' : ''));
     if (r.started) console.log('Relay start requested (hidden).');
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const locale = process.env.LC_ALL || process.env.LC_MESSAGES || process.env.LANG || Intl.DateTimeFormat().resolvedOptions().locale;
+    const hub = new MetaHub({ home: keys.home, locale, timeZone: tz });
+    const st = hub.status();
+    console.log('');
+    console.log(CONSENT_TITLE);
+    console.log(CONSENT_BODY);
+    console.log(st.defaultOn
+      ? 'This is on unless you turn it off. You can change it any time in the extension Settings.'
+      : 'This is off unless you turn it on. You can change it any time in the extension Settings.');
+    console.log('Policy: ' + PRIVACY_POLICY_URL);
     break;
   }
   default: console.log(HELP);

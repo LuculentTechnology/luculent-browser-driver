@@ -1,4 +1,4 @@
-// Side-panel chat history: Active, Closed, Saved.
+// Side-panel chat history: Active, Closed, Saved (LUC-3084).
 // Closing a tab/group/session moves an unsaved chat to Closed. Closed chats are deleted after 30 days.
 // Saved chats are kept until the user deletes them. Password values are never stored.
 import { randomBytes } from 'node:crypto';

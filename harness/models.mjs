@@ -93,8 +93,11 @@ for (let i = 0; i < 200 && !relay.router.ext; i++) await sleep(50);
 if (!relay.router.ext) throw new Error('extension did not connect');
 const ctx = { admin: false, key: keys.verify(key), sid: 'harness' };
 let toolCalls = 0;
+let firstActionAt = 0;
+function markFirstAction() { if (!firstActionAt) firstActionAt = performance.now(); }
 const rpc = (m, p) => relay.call(m, p, ctx);
 async function mcpCall(name, args) {
+  markFirstAction();
   toolCalls++;
   const r = await handleMcp({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } }, rpc);
   const res = r.result;
@@ -112,7 +115,7 @@ async function resetBrowser() {
 const FUNCS = TOOLS.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.inputSchema } }));
 async function chatLoop({ url, headers, model, prompt, extra = {}, onError }) {
   const messages = [{ role: 'system', content: SYSTEM }, { role: 'user', content: prompt }];
-  let cost = 0, tokens = 0;
+  let cost = 0, tokens = 0, provider = null, resolvedModel = null;
   for (let turn = 0; turn < 25; turn++) {
     let data;
     for (let attempt = 0; ; attempt++) {
@@ -128,9 +131,11 @@ async function chatLoop({ url, headers, model, prompt, extra = {}, onError }) {
       if (!next || attempt > 24) throw new Error(`HTTP ${r.status}: ${body.slice(0, 300)}`);
     }
     if (data.usage) { tokens += data.usage.total_tokens || 0; cost += Number(data.usage.cost || 0); }
+    if (data.provider) provider = data.provider;
+    if (data.model) resolvedModel = data.model;
     const msg = data.choices[0].message;
     messages.push({ role: 'assistant', content: msg.content || '', ...(msg.tool_calls ? { tool_calls: msg.tool_calls } : {}) });
-    if (!msg.tool_calls || !msg.tool_calls.length) return { answer: msg.content || '', turns: turn + 1, cost, tokens };
+    if (!msg.tool_calls || !msg.tool_calls.length) return { answer: msg.content || '', turns: turn + 1, cost, tokens, provider, resolvedModel };
     for (const tc of msg.tool_calls) {
       let args = {};
       try { args = tc.function.arguments ? JSON.parse(tc.function.arguments) : {}; } catch (_) {}
@@ -140,7 +145,7 @@ async function chatLoop({ url, headers, model, prompt, extra = {}, onError }) {
       messages.push({ role: 'tool', tool_call_id: tc.id, name: tc.function.name, content: out.slice(0, 30000) });
     }
   }
-  return { answer: '(turn limit)', turns: 25, cost, tokens };
+  return { answer: '(turn limit)', turns: 25, cost, tokens, provider, resolvedModel };
 }
 
 // Gemini keys + rotation through the existing steward rotation (gemini_rotate.py via fallback_route.py).
@@ -200,6 +205,22 @@ function codexEntry() {
   for (const c of [join(dirname(which), 'node_modules', '@openai', 'codex', 'bin', 'codex.js'), resolve(dirname(which), '..', 'lib', 'node_modules', '@openai', 'codex', 'bin', 'codex.js')]) if (existsSync(c)) return c;
   throw new Error('cannot find codex.js next to ' + which + ' (set LBD_CODEX_JS)');
 }
+const openrouterMaxTokens = Number(opt('max-tokens', 2000));
+function openrouterRunner(defaultModel, optName) {
+  return async (prompt) => {
+    const model = opt(optName, defaultModel);
+    const r = await chatLoop({
+      url: 'https://openrouter.ai/api/v1/chat/completions',
+      headers: () => ({ authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 'x-title': 'Luculent Browser Driver harness' }),
+      model: () => model,
+      prompt,
+      extra: { usage: { include: true }, max_tokens: openrouterMaxTokens, provider: { sort: 'price' } },
+      onError: async (status) => { if (status === 429 || status >= 500) { await sleep(2000); return true; } return false; },
+    });
+    return { ...r, model: r.resolvedModel || model };
+  };
+}
+
 const runners = {
   async gemini(prompt) {
     const env = geminiEnv();
@@ -224,16 +245,10 @@ const runners = {
     });
     return { ...r, model: `${pick.model} (${pick.label})` };
   },
-  async deepseek(prompt) {
-    const model = opt('deepseek-model', 'deepseek/deepseek-v4.1-flash-1017');
-    const r = await chatLoop({
-      url: 'https://openrouter.ai/api/v1/chat/completions',
-      headers: () => ({ authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 'x-title': 'Luculent Browser Driver harness' }),
-      model: () => model, prompt, extra: { usage: { include: true }, max_tokens: 2000 },
-      onError: async (status) => { if (status === 429 || status >= 500) { await sleep(2000); return true; } return false; },
-    });
-    return { ...r, model };
-  },
+  async deepseek(prompt) { return openrouterRunner('deepseek/deepseek-v4.1-flash-1017', 'deepseek-model')(prompt); },
+  async opus(prompt) { return openrouterRunner('anthropic/claude-opus-4.8', 'opus-model')(prompt); },
+  async sonnet(prompt) { return openrouterRunner('anthropic/claude-sonnet-4.6', 'sonnet-model')(prompt); },
+  async grok(prompt) { return openrouterRunner('x-ai/grok-4.3', 'grok-model')(prompt); },
   async codex(prompt) {
     // Codex connects to the relay's MCP-over-HTTP endpoint with the API key from an env var.
     const outFile = join(mkdtempSync(join(tmpdir(), 'lbd-codex-')), 'last.txt');
@@ -290,22 +305,24 @@ for (const model of MODELS) {
   for (const task of TASK_LIST) {
     await resetBrowser();
     const sub0 = fx.submissions.length;
+    firstActionAt = 0;
     const t0 = performance.now();
     const calls0 = toolCalls, relay0 = relayCalls;
     let r, err = null;
     try { r = await runners[model](TASKS[task].prompt(fx.url)); } catch (e) { err = e.message; r = { answer: '' }; }
     const ms = performance.now() - t0;
     const pass = !err && TASKS[task].check(fx, r.answer || '') && (task !== 'form' || fx.submissions.length > sub0);
-    const row = { model, modelId: r.model, task, pass, seconds: +(ms / 1000).toFixed(1), toolCalls: model === 'codex' ? relayCalls - relay0 : toolCalls - calls0, turns: r.turns, tokens: r.tokens, costUsd: r.cost ? +r.cost.toFixed(5) : 0, error: err, answer: (r.answer || '').slice(0, 300) };
+    const ttfaSeconds = firstActionAt ? +((firstActionAt - t0) / 1000).toFixed(2) : null;
+    const row = { model, modelId: r.model, provider: r.provider || null, task, pass, seconds: +(ms / 1000).toFixed(1), ttfaSeconds, toolCalls: model === 'codex' ? relayCalls - relay0 : toolCalls - calls0, turns: r.turns, tokens: r.tokens, costUsd: r.cost ? +r.cost.toFixed(5) : 0, error: err, answer: (r.answer || '').slice(0, 300) };
     results.push(row);
-    console.error(`${pass ? 'PASS' : 'FAIL'} ${model} ${task} ${row.seconds}s calls=${row.toolCalls}${err ? ' ERR ' + err.slice(0, 200) : ''}${!pass && !err ? ' answer=' + JSON.stringify(row.answer.slice(0, 200)) : ''}`);
+    console.error(`${pass ? 'PASS' : 'FAIL'} ${model} ${task} ${row.seconds}s (ttfa=${ttfaSeconds ?? '-'}s) calls=${row.toolCalls}${row.provider ? ' via ' + row.provider : ''}${err ? ' ERR ' + err.slice(0, 200) : ''}${!pass && !err ? ' answer=' + JSON.stringify(row.answer.slice(0, 200)) : ''}`);
   }
 }
 const out = opt('out');
 if (out) writeFileSync(out, JSON.stringify(results, null, 2));
-console.log('| Model | Task | Pass | Seconds | Tool calls | Cost USD |');
-console.log('|---|---|---|---|---|---|');
-for (const r of results) console.log(`| ${r.modelId || r.model} | ${r.task} | ${r.pass ? 'PASS' : 'FAIL'} | ${r.seconds} | ${r.toolCalls} | ${r.costUsd || '-'} |`);
+console.log('| Model | Provider | Task | Pass | Seconds | TTFA s | Tool calls | Cost USD |');
+console.log('|---|---|---|---|---|---|---|---|');
+for (const r of results) console.log(`| ${r.modelId || r.model} | ${r.provider || '-'} | ${r.task} | ${r.pass ? 'PASS' : 'FAIL'} | ${r.seconds} | ${r.ttfaSeconds ?? '-'} | ${r.toolCalls} | ${r.costUsd || '-'} |`);
 await browser.close();
 await relay.stop();
 await fx.close(); await fxb.close();

@@ -9,7 +9,7 @@ const STEP = {
   type: 'object',
   description: 'One step. "action" picks the operation; set only the fields that action uses.',
   properties: {
-    action: { type: 'string', enum: ['navigate', 'click', 'dblclick', 'rightclick', 'hover', 'type', 'fill', 'press', 'select', 'check', 'uncheck', 'wait', 'extract', 'eval', 'scroll', 'upload', 'cookies', 'storage', 'downloads', 'dialog', 'viewport', 'snapshot', 'screenshot', 'back', 'forward', 'reload', 'drag', 'wheel', 'table', 'media', 'pdf', 'geolocation', 'permissions'] },
+    action: { type: 'string', enum: ['navigate', 'click', 'dblclick', 'rightclick', 'hover', 'type', 'fill', 'press', 'select', 'check', 'uncheck', 'wait', 'extract', 'eval', 'scroll', 'upload', 'cookies', 'storage', 'downloads', 'dialog', 'viewport', 'snapshot', 'screenshot', 'back', 'forward', 'reload', 'drag', 'wheel', 'table', 'media', 'pdf', 'geolocation', 'permissions', 'diagnostics'] },
     url: { type: 'string', description: 'navigate: URL. wait: URL substring to wait for.' },
     target,
     text: { type: 'string', description: 'type/fill: text to enter. wait: visible text to wait for.' },
@@ -17,7 +17,6 @@ const STEP = {
     value: { type: 'string', description: 'select: option value or label. storage: value to set.' },
     key: { type: 'string', description: 'press: key or combo, e.g. Enter, Tab, Control+a. storage/cookies: key/name.' },
     submit: { type: 'boolean', description: 'type: press Enter after typing.' },
-    clear: { type: 'boolean', description: 'type: replace existing text (default true).' },
     waitNav: { type: 'boolean', description: 'click/press/type: also wait for the page load this triggers.' },
     checked: { type: 'boolean' },
     what: { type: 'string', enum: ['text', 'html', 'value', 'attr', 'href', 'info'], description: 'extract: what to read (default text).' },
@@ -33,6 +32,10 @@ const STEP = {
     op: { type: 'string', description: 'cookies/storage/downloads operation.' },
     name: { type: 'string' },
     dy: { type: 'number' },
+    find: { type: 'string', description: 'scroll: target to find by scrolling through virtualized/lazy lists.' },
+    untilVisible: { type: 'boolean', description: 'scroll: keep scrolling until target is visible.' },
+    maxScrolls: { type: 'number', description: 'scroll: max scroll steps when finding a virtualized element (default 20).' },
+    clear: { type: 'boolean', description: 'type: replace existing text (default true). diagnostics: clear captured logs after reading.' },
     mode: { type: 'string', enum: ['full', 'diff'] },
     frame: { type: 'string', description: 'Run this step inside an iframe (same- or cross-origin): CSS selector of the <iframe>, e.g. "#editor" or "iframe[title=Preview]". Chain nested frames with " >> ".' },
     expectPopup: { type: 'boolean', description: 'click: the click opens a new tab/window; its tab id is returned as value.popup.' },
@@ -65,7 +68,7 @@ export const TOOLS = [
     description: 'List, open, close or focus tabs. list shows every tab in the connected Chrome (via the Luculent extension) and in headless browsers. new opens a tab (source "extension" = your real Chrome, "headless" = background Chrome). Attaching to an existing tab needs no new tab: just pass its id to any tool.',
     inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['list', 'new', 'close', 'activate'] }, tab, tabs: { type: 'array', items: { type: 'string' }, description: 'Several tab ids for close' }, url: { type: 'string' }, source: { type: 'string', enum: ['extension', 'headless'] }, active: { type: 'boolean' } }, required: ['action'] },
   },
-  { name: 'browser_snapshot', description: 'Compact accessibility-style snapshot of the page: one line per interactive element with a ref like [e12], headings and short text. mode "diff" returns only what changed since your last snapshot of this tab.', inputSchema: { type: 'object', properties: { tab, mode: { type: 'string', enum: ['full', 'diff'] }, max: { type: 'number' }, text: { type: 'boolean', description: 'Include plain text lines (default true)' }, viewport: { type: 'boolean', description: 'Only elements in the viewport' } } } },
+  { name: 'browser_snapshot', description: 'Compact accessibility-style snapshot of the page by default: interactive elements only, deduped, truncated text, refs like [e12]. mode "diff" returns only what changed since your last snapshot of this tab. mode "full" includes headings and short text. Prefer compact or diff over a full re-snapshot after each action.', inputSchema: { type: 'object', properties: { tab, mode: { type: 'string', enum: ['compact', 'diff', 'full'] }, max: { type: 'number' }, text: { type: 'boolean', description: 'Include plain text lines (default false in compact)' }, viewport: { type: 'boolean', description: 'Only elements in the viewport' }, interactive: { type: 'boolean', description: 'Only interactive elements (default true in compact)' } } } },
   { name: 'browser_navigate', description: 'Go to a URL in a tab and wait for DOMContentLoaded (or wait:"load"/"none").', inputSchema: { type: 'object', properties: { tab, url: { type: 'string' }, wait: { type: 'string', enum: ['domcontentloaded', 'load', 'none'] }, snapshot: snap }, required: ['url'] } },
   { name: 'browser_click', description: 'Click an element with real mouse events. waitNav:true also waits for the resulting page load.', inputSchema: { type: 'object', properties: { tab, target, waitNav: { type: 'boolean' }, snapshot: snap }, required: ['target'] } },
   { name: 'browser_type', description: 'Focus an element, replace its text (clear:false to append) and optionally press Enter (submit:true).', inputSchema: { type: 'object', properties: { tab, target, text: { type: 'string' }, clear: { type: 'boolean' }, submit: { type: 'boolean' }, waitNav: { type: 'boolean' }, snapshot: snap }, required: ['target', 'text'] } },
@@ -96,17 +99,27 @@ export const TOOLS = [
   { name: 'browser_flow_list', description: 'List saved recorded flows.', inputSchema: { type: 'object', properties: {} } },
   { name: 'browser_flow_replay', description: 'Replay a saved flow with no model calls. If a step fails, returns needsModel so you can take over.', inputSchema: { type: 'object', properties: { name: { type: 'string' }, tab }, required: ['name'] } },
   { name: 'browser_profiles', description: 'List Chrome profiles connected to this relay.', inputSchema: { type: 'object', properties: {} } },
-  { name: 'browser_plan', description: 'File a short plan (typically the next 3 clicks/moves) with an expected state after each step. op=run executes the plan: after each action a cheap confirm (URL/title, visibility, short accessibility snapshot) is checked against that step\'s expect. A match runs the next planned move immediately, without a full page re-analysis. A miss returns event=replan with the confirmed state so you can op=adjust the remaining steps. op=get/clear/confirm/set inspect, drop, or preview the plan shown in the side panel. A screenshot is used only when the cheap check is inconclusive or failed.',
+  { name: 'browser_click_mode', description: 'Read or set what happens when the user clicks in the tab the AI is driving: cowork (default: the AI waits while the user helps, then continues from their state), pause (user input pauses the task until they press Resume), or disable (the tab is locked while the AI works). Omit mode to read it. Results of browser_run can carry event=cowork with the page state after the user stepped in.',
+    inputSchema: { type: 'object', properties: { mode: { type: 'string', enum: ['cowork', 'pause', 'disable'] } } } },
+  { name: 'browser_diagnostics', description: 'Read captured console errors/warnings, uncaught page exceptions, unhandled promise rejections, and HTTP >= 400 failed network resources from the tab without needing eval permission.',
+    inputSchema: { type: 'object', properties: { tab, clear: { type: 'boolean', description: 'Clear captured console/error logs after reading.' } } } },
+  { name: 'browser_audit', description: 'Run a comprehensive Click Test, Visual Check, or Code Check on the tab, returning an interactive surface inventory, discovered defects (occluded targets, dead links, overflows, duplicate IDs, unlabeled fields, failed assets), and a structured remediation plan.',
+    inputSchema: { type: 'object', properties: { tab, kind: { type: 'string', enum: ['click', 'visual', 'code', 'all'], description: 'Diagnostic suite to run (default "all").' } } } },
+  { name: 'browser_plan', description: 'File a loose plan for the next set of actions. op=run executes it in one call. The plan is a framework, not an exact script: each step has an intent (what the step is for), optional hints (fuzzy role/text/landmark candidates with a confidence), and an estimate (likely page type, likely next 2-3 actions, likely blockers). Detail should scale with familiarity: for a site you have not seen (no priors, no cached locators), plan at intent level only and do not guess selectors, refs or positions; the driver marks such steps familiarity=new, drops concrete targets, and resolves the intent in code against the live page when it arrives. Concrete targets are used only where there is real knowledge (familiarity known/seen). After each action a zero-token code check compares the page with expect (there is no confirm model call and no full re-snapshot); a partial match is normal and the plan keeps going. Cookie banners and declared modal blockers are cleared in code. Control returns to you only when an intent cannot be resolved with reasonable confidence (event=adapt, with a compact delta, the top candidates and the remaining framework, so adjust the framework rather than replanning from scratch), or when an expect marked hard:true misses (event=replan). If the user clicks in the tab while you work, cowork mode waits until they go idle and continues from their state (lastEvent=cowork). op=get/clear/confirm/set/adjust inspect, drop, preview or rewrite the plan.',
     inputSchema: { type: 'object', properties: {
       tab,
-      op: { type: 'string', enum: ['run', 'set', 'get', 'clear', 'confirm', 'adjust', 'next'], description: 'Default run when steps are provided, otherwise get.' },
+      op: { type: 'string', enum: ['run', 'set', 'get', 'clear', 'confirm', 'adjust', 'next'], description: 'Default run when steps are provided, otherwise get. confirm is a code-only preview, not a model call.' },
       goal: { type: 'string', description: 'What this plan is trying to accomplish (shown in the side panel).' },
-      autoConfirm: { type: 'boolean', description: 'Confirm expected state after each step (default true).' },
-      visionWhenNeeded: { type: 'boolean', description: 'Fall back to a cheap screenshot only if the DOM/accessibility confirm is inconclusive or failed (default true).' },
+      autoConfirm: { type: 'boolean', description: 'Code-check expected state after each step (default true). Never calls the model.' },
+      visionWhenNeeded: { type: 'boolean', description: 'Take a screenshot only if a step\'s expect.vision is true (default false).' },
       reason: { type: 'string', description: 'adjust: why the remaining plan is being rewritten.' },
       fromIndex: { type: 'number', description: 'adjust: replace steps starting at this index (default: current).' },
-      steps: { type: 'array', items: { type: 'object', description: 'A planned action plus expect. Use the same action fields as browser_run steps.', properties: {
+      steps: { type: 'array', items: { type: 'object', description: 'One planned action: intent, action, optional hints and estimate, soft expect, optional branches. Use the same action fields as browser_run steps. Give target only where you really know the page.', properties: {
         action: { type: 'string' },
+        intent: { type: 'string', description: 'Goal of this step in plain words, e.g. "open the latest release". Resolved against the live page in code.' },
+        hints: { type: 'array', description: 'Fuzzy target candidates, best first. Strings like "Releases" or objects.', items: { type: ['object', 'string'], properties: { role: { type: 'string' }, text: { type: 'string' }, landmark: { type: 'string', description: 'header, nav, main, footer.' }, confidence: { type: 'number', description: '0..1' } } } },
+        estimate: { type: 'object', description: 'Contextual estimates for this point in the flow.', properties: { pageType: { type: 'string' }, next: { type: 'array', items: { type: 'string' } }, blockers: { type: 'array', items: { type: 'string' }, description: 'e.g. cookie banner, login wall, modal.' } } },
+        familiarity: { type: 'string', enum: ['new', 'seen', 'known'], description: 'Optional. The driver computes it from priors, cached locators and visits; it can only lower it.' },
         url: { type: 'string' },
         target: { type: 'string' },
         text: { type: 'string' },
@@ -114,14 +127,24 @@ export const TOOLS = [
         waitNav: { type: 'boolean' },
         submit: { type: 'boolean' },
         ms: { type: 'number' },
-        expect: { type: 'object', description: 'Assertions about the page after this step. Strings are case-insensitive substrings, or regex if they start with ^ or are /pattern/.', properties: {
+        expect: { type: 'object', description: 'Machine-checkable outcomes after this step. Strings are case-insensitive substrings, or regex if they start with ^ or are /pattern/.', properties: {
           url: { type: 'string' },
+          path: { type: 'string', description: 'URL pathname pattern (substring or regex).' },
           title: { type: 'string' },
           text: { type: 'string' },
           heading: { type: 'string' },
-          visible: { type: 'string', description: 'A target that should be visible (text=, css=, role=, or a snapshot ref).' },
+          visible: { type: 'string', description: 'A target that should be present (text=, css=, role=, or a snapshot ref).' },
+          selector: { type: 'string', description: 'CSS selector that should exist after the step.' },
+          role: { type: 'string', description: 'Accessible role that should exist (combine with name).' },
+          name: { type: 'string', description: 'Accessible name; used with role or on its own.' },
           snapshotIncludes: { type: 'string' },
+          vision: { type: 'boolean', description: 'If true, take a screenshot for this step only.' },
+          hard: { type: 'boolean', description: 'If true, a miss stops the plan (event=replan). Default false: misses are soft and the plan continues.' },
         } },
+        branches: { type: 'array', description: 'Alternate steps taken in-code when expect misses and a branch.when matches (cookie banner, login wall, A/B, modal). No model call.', items: { type: 'object', properties: {
+          when: { type: 'object', description: 'Same shape as expect; first match wins.' },
+          steps: { type: 'array', items: { type: 'object' }, description: 'Steps spliced in and run immediately.' },
+        } } },
       } } },
     } } },
 ];
@@ -239,6 +262,16 @@ export async function callTool(name, a, rpc) {
     case 'browser_flow_list': return text(JSON.stringify(await rpc('flow.list', {}), null, 2));
     case 'browser_flow_replay': return text(JSON.stringify(await rpc('flow.replay', { name: a.name, tab: a.tab }), null, 2));
     case 'browser_profiles': return text(JSON.stringify(await rpc('profiles.list', {}), null, 2));
+    case 'browser_click_mode': return text(JSON.stringify(await rpc(a.mode ? 'interaction.set' : 'interaction.get', a.mode ? { mode: a.mode } : {}), null, 2));
+    case 'browser_diagnostics': {
+      const r = await rpc('run', { tab: a.tab, steps: [{ action: 'diagnostics', clear: !!a.clear }], snapshot: 'none' });
+      const s = r.results?.[0];
+      return s && s.ok ? text(JSON.stringify(s.value, null, 2)) : text(s?.error || 'diagnostics failed', true);
+    }
+    case 'browser_audit': {
+      const r = await rpc('audit.page', { tab: a.tab, kind: a.kind || 'all' });
+      return text(JSON.stringify(r, null, 2));
+    }
     case 'browser_plan': {
       const op = a.op || (a.steps && a.steps.length ? 'run' : 'get');
       const method = op === 'start' ? 'plan.set' : ('plan.' + op);

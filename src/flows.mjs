@@ -1,4 +1,4 @@
-// Recorded flows: capture driver steps and replay them with no model calls.
+// Recorded flows: capture driver steps and replay them with no model calls (LUC-3079).
 // On a failed step, return needsModel so the agent can take over from that point.
 import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync, renameSync, unlinkSync } from 'node:fs';
@@ -10,13 +10,23 @@ function safeName(name) {
   return s || ('flow-' + randomBytes(4).toString('hex'));
 }
 
+export function isPasswordStep(step = {}) {
+  if (step.isPassword === true || step.password === true) return true;
+  if (step.sensitive === 'password' || step.formSensitive === 'password') return true;
+  const typ = String(step.inputType || step.fieldType || '').toLowerCase();
+  if (typ === 'password') return true;
+  if (String(step.type || '').toLowerCase() === 'password') return true;
+  const blob = [step.target, step.name, step.what, step.label, step.placeholder, step.id, step.role, step.selector]
+    .map((x) => String(x || '')).join(' ');
+  return /password|passwd|pwd\b/i.test(blob);
+}
+
 export function sanitizeStep(step = {}) {
   const s = { ...step };
   if (s.text != null) s.text = redactSecrets(s.text);
   if (s.value != null && typeof s.value === 'string') s.value = redactSecrets(s.value);
   if (s.js != null) s.js = redactSecrets(s.js);
-  const pw = /password|passwd/i.test(String(s.target || s.name || s.what || ''));
-  if (pw) {
+  if (isPasswordStep(s)) {
     if (s.text != null) s.text = '[redacted]';
     if (s.value != null) s.value = '[redacted]';
   }

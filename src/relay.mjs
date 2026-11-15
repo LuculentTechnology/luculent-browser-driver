@@ -13,11 +13,18 @@ import { ChatStore } from './chats.mjs';
 import { PanelHub } from './panel.mjs';
 import { FlowStore } from './flows.mjs';
 import { PlanHub } from './plan.mjs';
+import { MetaHub } from './meta-buffer.mjs';
+import { loadPriors, lookupPriors, bundledPriorsPath } from './priors.mjs';
+import { LocatorCache } from './locators.mjs';
+import { InteractionTracker, normalizeClickMode, CLICK_MODES, CLICK_MODE_LABELS } from './cowork.mjs';
+import { frameSteps, hostOf } from './framework.mjs';
+import { CONSENT_TITLE, PRIVACY_POLICY_URL } from './meta.mjs';
 import { setup as onboardSetup } from './onboard.mjs';
 import { sanitizePageContext, pageContextMessage, PAGE_CONTEXT_INSTRUCTION } from './page-context.mjs';
 import { extractInPage } from '../extension/extract.js';
+import { runInPageAudit } from '../extension/testing.js';
 
-import { PolicyStore, RateLimiter, effective, normalize, urlBlocked, CAPS } from './policy.mjs';
+import { PolicyStore, RateLimiter, effective, normalize, urlBlocked, hasUrlScheme, CAPS } from './policy.mjs';
 
 export const VERSION = '0.3.0';
 export const DEFAULT_PORT = 47800;
@@ -27,13 +34,29 @@ export const EXTENSION_ID = 'oddcfadbpoapebpdmfbggiiibpbcpdoo';
 class ApiError extends Error { constructor(status, message) { super(message); this.status = status; } }
 const denyErr = (msg) => { const e = new ApiError(403, 'Blocked by your Luculent security settings: ' + msg); e.denied = true; return e; };
 
-const READ_ACTIONS = new Set(['snapshot', 'extract', 'text', 'wait', 'screenshot', 'scroll', 'downloads', 'table', 'pdf']);
+const READ_ACTIONS = new Set(['snapshot', 'extract', 'text', 'read', 'wait', 'screenshot', 'scroll', 'downloads', 'table', 'pdf', 'diagnostics']);
 // Allowed in read-only mode: look, scroll, navigate; no clicks, typing, uploads or JS.
-const READONLY_OK = new Set(['navigate', 'goto', 'back', 'forward', 'reload', 'snapshot', 'extract', 'text', 'wait', 'screenshot', 'scroll', 'hover', 'table', 'pdf', 'downloads', 'viewport']);
-const STEP_METHODS = new Set(['key', 'upload', 'cookies', 'storage', 'downloads', 'dialog', 'viewport', 'navigate', 'goto', 'click', 'dblclick', 'rightclick', 'hover', 'type', 'fill', 'press', 'select', 'check', 'uncheck', 'wait', 'extract', 'eval', 'scroll', 'back', 'forward', 'reload', 'drag', 'wheel', 'table', 'media', 'pdf', 'geolocation', 'permissions']);
+const READONLY_OK = new Set(['navigate', 'goto', 'open', 'back', 'forward', 'reload', 'snapshot', 'extract', 'text', 'read', 'wait', 'screenshot', 'scroll', 'hover', 'table', 'pdf', 'downloads', 'viewport', 'diagnostics']);
+const STEP_METHODS = new Set(['key', 'upload', 'cookies', 'storage', 'downloads', 'dialog', 'viewport', 'navigate', 'goto', 'open', 'click', 'dblclick', 'rightclick', 'tap', 'hover', 'type', 'fill', 'input', 'press', 'select', 'check', 'uncheck', 'wait', 'extract', 'text', 'read', 'eval', 'scroll', 'back', 'forward', 'reload', 'drag', 'wheel', 'table', 'media', 'pdf', 'geolocation', 'permissions', 'diagnostics']);
 const LABEL = { passwords: 'Reading or typing passwords', eval: 'Running JavaScript in pages', cookies: 'Reading or changing cookies', storage: 'Reading or changing site storage', downloads: 'Downloads', uploads: 'Uploading local files', submitSensitive: 'Submitting login/payment forms', rawCdp: 'Raw DevTools protocol access', headless: 'Background (headless) Chrome', internalPages: 'Browser-internal pages', fileUrls: 'Local file:// pages' };
 
 /** Most restrictive combination of two policies (relay file + the extension's own settings). */
+
+export function resolveExistingTab(rec, tabs) {
+  if (!rec || !tabs || !tabs.length) return null;
+  const usable = (t) => t && t.granted !== false;
+  if (rec.lastTab != null && rec.lastTab !== '') {
+    const last = String(rec.lastTab);
+    const hit = tabs.find((t) => usable(t) && String(t.tab || t.id) === last);
+    if (hit) return hit;
+  }
+  if (rec.groupId != null && rec.groupId !== '') {
+    const g = tabs.find((t) => usable(t) && String(t.groupId) === String(rec.groupId));
+    if (g) return g;
+  }
+  return null;
+}
+
 export function strictest(a, b) {
   if (!b) return normalize(a);
   a = normalize(a); b = normalize(b);
@@ -44,7 +67,9 @@ export function strictest(a, b) {
   out.grantMode = a.grantMode === 'granted' || b.grantMode === 'granted' ? 'granted' : 'all';
   out.incognito = a.incognito && b.incognito;
   out.blocklist = [...new Set([...a.blocklist, ...b.blocklist])];
-  out.allowlist = a.allowlist.length && b.allowlist.length ? a.allowlist.filter((x) => b.allowlist.includes(x)) : a.allowlist.length ? a.allowlist : b.allowlist;
+  const bothAllow = a.allowlist.length && b.allowlist.length;
+  out.allowlist = bothAllow ? a.allowlist.filter((x) => b.allowlist.includes(x)) : a.allowlist.length ? a.allowlist : b.allowlist;
+  out.allowlistRequired = !!bothAllow;
   out.rateLimit = { perSecond: Math.min(a.rateLimit.perSecond, b.rateLimit.perSecond), perMinute: Math.min(a.rateLimit.perMinute, b.rateLimit.perMinute) };
   return out;
 }
@@ -116,6 +141,15 @@ export class Router {
       if (rec.ws?.readyState === 1 && !seen.has(rec.ws)) { seen.add(rec.ws); try { rec.ws.send(JSON.stringify(msg)); } catch (_) {} }
     }
     if (!seen.size && this.ext?.readyState === 1) { try { this.ext.send(JSON.stringify(msg)); } catch (_) {} }
+  }
+  extCallAll(msg, timeout = 30000) {
+    const recs = [];
+    const seen = new Set();
+    for (const rec of this.exts.values()) {
+      if (rec.ws?.readyState === 1 && !seen.has(rec.ws)) { seen.add(rec.ws); recs.push(rec); }
+    }
+    if (!seen.size && this.ext?.readyState === 1) recs.push({ ws: this.ext, info: this.extInfo });
+    return Promise.allSettled(recs.map((rec) => this.extCall({ ...msg, profileId: rec.info?.profileId }, timeout)));
   }
   isHeadless(tab) { return /^h\d+:\d+$/.test(tab); }
   browserFor(tab) {
@@ -250,10 +284,48 @@ export class Relay {
     this.chats = new ChatStore({ path: join(keys.home, 'chats.json') });
     this.panel = new PanelHub(this.chats);
     this.plans = new PlanHub();
+    this.meta = new MetaHub({
+      home: keys.home,
+      policy: () => this.policy.get(),
+      ingestUrl: process.env.LBD_META_INGEST_URL || '',
+      locale: process.env.LC_ALL || process.env.LC_MESSAGES || process.env.LANG || undefined,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
+    this.priors = loadPriors(join(keys.home, 'priors.json'), { fallback: bundledPriorsPath() });
+    this.locators = new LocatorCache(join(keys.home, 'locators.json'));
+    this.engine.locators = this.locators;
+    this.sessionByKey = new Map();
+    this._driveDepth = 0;
+    this._driveTab = null;
+    this._takenBack = false;
+    this._panelDisableWindow = false;
+    // T1288: what happens when you click in the AI's tab (cowork / pause / disable window).
+    this.interact = new InteractionTracker();
+    this._clickModeOverride = null;
+    this._watchTab = null;
+    this._interactionState = null;
+    this.seenHosts = new Set();
+    {
+      // The page sees the driver's CDP input as trusted too. Mark every Input.* command as AI input so the
+      // tracker never mistakes the AI's own clicks and keys for yours.
+      const send0 = this.router.send.bind(this.router);
+      this.router.send = (tab, method, params, session) => {
+        if (typeof method === 'string' && method.startsWith('Input.')) {
+          const w = this.interact.aiStart();
+          return Promise.resolve(send0(tab, method, params, session)).finally(() => this.interact.aiEnd(w));
+        }
+        return send0(tab, method, params, session);
+      };
+    }
+    this._loadSessions();
+
     this.flows = new FlowStore(join(keys.home, 'flows'));
     this.humanPauses = new Map();
+    this.pausedTabs = new Map(); // tabId -> reason
     this.chats.purge();
     this.pending = new Map(); // confirmation id -> request
+    this.pendingAccess = new Map(); // access request id -> { keyId, resolve }
+    this.pendingAccessByKey = new Map(); // keyId -> Promise<boolean>
     this.auditLog = [];
     this.auditPath = join(keys.home, 'audit.log');
     this.locks = new Map();
@@ -305,6 +377,36 @@ export class Relay {
   }
   resolveConfirm(id, allow) { const p = this.pending.get(id); if (!p) return false; p.resolve(!!allow); return true; }
   pendingList() { return [...this.pending.values()].map(({ resolve, ...p }) => p); }
+  resolveAccess(id, allow, scope) { const p = this.pendingAccess.get(id); if (!p) return false; p.resolve(!!allow, scope); return true; }
+  requestAccessApproval(ctx, timeoutSec = 120) {
+    const keyId = String(ctx?.key?.id || ctx?.sid || 'agent');
+    const keyName = String(ctx?.key?.name || 'AI agent');
+    const existing = this.pendingAccessByKey.get(keyId);
+    if (existing) return existing;
+    const id = randomBytes(6).toString('hex');
+    const entry = { id, keyId, keyName, sid: ctx?.sid || null, at: new Date().toISOString() };
+    this.log(`[lbd] connection approval needed ${id}: ${keyName} wants to connect. Open the extension popup to approve.`);
+    const promise = new Promise((res) => {
+      const timer = setTimeout(() => {
+        this.pendingAccess.delete(id);
+        this.pendingAccessByKey.delete(keyId);
+        this.router.extNotify({ type: 'accessExpired', id });
+        res(false);
+      }, Math.max(5, Number(this.extSettings?.confirmTimeoutSec) || timeoutSec) * 1000);
+      this.pendingAccess.set(id, {
+        ...entry,
+        resolve: (ok) => {
+          clearTimeout(timer);
+          this.pendingAccess.delete(id);
+          this.pendingAccessByKey.delete(keyId);
+          res(!!ok);
+        },
+      });
+      this.router.extNotify({ type: 'accessRequest', ...entry });
+    });
+    this.pendingAccessByKey.set(keyId, promise);
+    return promise;
+  }
 
   lock(tab, fn) {
     const prev = this.locks.get(tab) || Promise.resolve();
@@ -320,13 +422,29 @@ export class Relay {
     for (const ws of this.agents) { try { ws.close(4001, 'killswitch engaged'); } catch (_) {} }
     this.agents.clear();
     for (const p of this.pending.values()) p.resolve(false);
-    if (this.router.ext) { try { await this.router.extCall({ type: 'detachAll' }, 3000); } catch (_) {} }
+    try { await this.router.extCallAll({ type: 'detachAll' }, 3000); } catch (_) {}
     await this.router.closeBrowser();
     this.audit(null, { method: 'killswitch', result: 'engaged', reason });
     this.log(`[lbd] KILLSWITCH engaged (${reason})`);
     return { killed: true };
   }
   resume() { this.keys.setState({ killed: false, resumedAt: new Date().toISOString() }); this.router.extNotify({ type: 'resumed' }); this.audit(null, { method: 'killswitch', result: 'released' }); this.log('[lbd] killswitch released'); return { killed: false }; }
+
+  async recordFlowStep(ctx, p) {
+    const step = { ...(p.step && typeof p.step === 'object' ? p.step : p) };
+    const typing = ['type', 'fill', 'press', 'key'].includes(step.action);
+    if (typing && step.target != null && !step.isPassword) {
+      let tab = p.tab || step.tab;
+      if (!tab) { try { tab = await this.defaultTab(ctx); } catch (_) { tab = null; } }
+      if (tab) {
+        try {
+          const info = await this.engine.helper(tab, 'inspect', [step.target], { frame: step.frame });
+          if (info && info.isPassword) step.isPassword = true;
+        } catch (_) {}
+      }
+    }
+    return { n: this.flows.record(step) };
+  }
 
   need(ctx, scope) {
     if (ctx.admin) return;
@@ -341,9 +459,160 @@ export class Relay {
     return true;
   }
 
+  assertHeadlessAllowed(ctx) {
+    this.need(ctx, 'headless');
+    if (this.policyFor(ctx, null).headless === 'deny') throw denyErr('Background (headless) Chrome is turned off.');
+  }
+
+  async assertVisibleTab(ctx, tab) {
+    tab = String(tab || '');
+    if (!tab) return tab;
+    const e = this.policyFor(ctx, tab);
+    if (this.router.isHeadless(tab)) {
+      try {
+        const st = await this.engine.docState(tab);
+        const url = st && st[2];
+        if (url) {
+          const why = urlBlocked(e, url);
+          if (why) throw denyErr(why);
+        }
+      } catch (err) {
+        if (err && (err.denied || err.status === 403)) throw err;
+      }
+      return tab;
+    }
+    const { tabs } = await this.router.tabs();
+    const t = tabs.find((x) => String(x.tab) === tab);
+    if (t && !this.visibleTab(t, e)) throw denyErr(t.incognito ? 'incognito tabs are off limits' : 'this tab has not been granted to agents (use "Let agents use this tab" in the extension popup)');
+    if (t && t.url) {
+      const why = urlBlocked(e, t.url);
+      if (why) throw denyErr(why);
+    }
+    return tab;
+  }
+
+  _sessionsPath() { return join(this.keys.home, 'sessions.json'); }
+  _loadSessions() {
+    try {
+      const p = this._sessionsPath();
+      if (!existsSync(p)) return;
+      const doc = JSON.parse(readFileSync(p, 'utf8'));
+      this.sessionByKey = new Map(Object.entries(doc.byKey || {}));
+    } catch (_) { this.sessionByKey = new Map(); }
+  }
+  _saveSessions() {
+    try {
+      const tmp = this._sessionsPath() + '.tmp';
+      const byKey = Object.fromEntries(this.sessionByKey || []);
+      writeFileSync(tmp, JSON.stringify({ v: 1, byKey }, null, 2), { mode: 0o600 });
+      renameSync(tmp, this._sessionsPath());
+    } catch (_) {}
+  }
+  async existingSessionTab(ctx) {
+    const rec = (ctx && ctx.sid && this.sessions.get(ctx.sid))
+      || (ctx && ctx.key && ctx.key.id && this.sessionByKey.get(String(ctx.key.id)))
+      || null;
+    if (!rec) return null;
+    try {
+      const { tabs } = await this.router.tabs();
+      return resolveExistingTab(rec, tabs || []);
+    } catch (_) {}
+    return null;
+  }
+  driveLabel(ctx) {
+    try {
+      const view = this.panel && this.panel.view && ctx ? this.panel.view(ctx) : null;
+      const name = (view && (view.model || view.provider || view.chatName)) || (ctx && ctx.key && ctx.key.name) || 'Luculent';
+      return String(name).slice(0, 40);
+    } catch (_) {
+      return (ctx && ctx.key && ctx.key.name) || 'Luculent';
+    }
+  }
+  async beginDrive(ctx, tab) {
+    this._driveDepth = (this._driveDepth || 0) + 1;
+    if (this._driveDepth !== 1) return;
+    this._driveTab = tab;
+    this._driveCtx = ctx;
+    this._takenBack = false;
+    const settings = this.extSettings || {};
+    const mode = this.clickMode();
+    this.interact.setMode(mode);
+    const block = mode === 'disable';
+    if (this._watchTab == null || String(this._watchTab) !== String(tab)) { this.interact.consume(); this.interact.resume(); }
+    this._watchTab = tab;
+    const cursor = settings.aiCursor !== false;
+    const label = this.driveLabel(ctx);
+    if (this.engine) {
+      this.engine.cursor = cursor;
+      this.engine.cursorLabel = label;
+    }
+    const payload = { type: 'driveStart', tabId: /^\d+$/.test(String(tab)) ? Number(tab) : tab, block, cursor, label, mode };
+    try { await this.router.extCall({ type: 'warm', tabId: payload.tabId }, 800); } catch (_) {}
+    try { await this.router.extCall(payload, 800); } catch (_) { try { this.router.extNotify(payload); } catch (_) {} }
+  }
+  clickMode() {
+    if (this._clickModeOverride) return this._clickModeOverride;
+    const st = this.extSettings || {};
+    return normalizeClickMode(st.clickMode, { disableWindow: st.disableWindow === true || this._panelDisableWindow === true });
+  }
+  interactionPublic() {
+    const st = this.interact.status();
+    return { ...st, mode: this.clickMode(), label: CLICK_MODE_LABELS[this.clickMode()], state: this._interactionState ? this._interactionState.state : null, tab: this._watchTab != null ? String(this._watchTab) : null };
+  }
+  notifyInteraction(tab, state) {
+    this._interactionState = { state, tab: tab != null ? String(tab) : null, at: Date.now() };
+    const tabId = /^\d+$/.test(String(tab)) ? Number(tab) : tab;
+    try { this.router.extNotify({ type: 'interaction', state, tabId, mode: this.clickMode() }); } catch (_) {}
+    try { this.syncPanel(); } catch (_) {}
+  }
+  onUserInput(m = {}) {
+    const tab = m.tabId != null ? String(m.tabId) : null;
+    if (!tab || this._watchTab == null || String(this._watchTab) !== tab) return { action: 'ignored', why: 'tab' };
+    this.interact.setMode(this.clickMode());
+    const r = this.interact.onUserInput({ at: Number(m.at), kind: String(m.kind || ''), url: m.url ? String(m.url) : undefined });
+    if (r.action === 'pause' && r.changed) this.notifyInteraction(tab, 'paused');
+    else if (r.action === 'cowork' && r.changed) this.notifyInteraction(tab, 'cowork');
+    return r;
+  }
+  /** Before AI input: zero cost unless you touched the tab. Cowork holds until you go idle; Pause waits for Resume. */
+  async userGate(ctx, tab) {
+    if (tab == null || this.router.isHeadless(String(tab))) return null;
+    if (this._watchTab != null && String(this._watchTab) !== String(tab)) return null;
+    const mode = this.clickMode();
+    this.interact.setMode(mode);
+    if (mode === 'disable' || (!this.interact.hasPending() && !this.interact.paused)) return null;
+    const g = await this.interact.gate({ shouldStop: () => this._takenBack || this.killed, onHold: (state) => this.notifyInteraction(tab, state) });
+    if (g.stopped || g.timeout) return g;
+    const info = this.interact.consume();
+    if (info) this.notifyInteraction(tab, 'resumed');
+    return info ? { ...g, ...info } : g;
+  }
+  async coworkReport(tab, info = {}) {
+    let snap = null;
+    try { snap = await this.engine.snapshot(String(tab), { mode: 'compact', max: 60, updateBaseline: true }); } catch (_) {}
+    return {
+      userStepped: true, mode: info.mode || this.clickMode(), kinds: info.kinds || [], count: info.count || 0,
+      url: snap ? snap.url : undefined, title: snap ? snap.title : undefined, lines: snap ? (snap.lines || []).slice(0, 60) : [],
+      note: 'The user stepped in on this tab (usually to get you past a spot you were stuck on). Continue the task from this page state and treat their action as progress. Refs from earlier snapshots may be stale; use the lines above.',
+    };
+  }
+  async endDrive() {
+    this._driveDepth = Math.max(0, (this._driveDepth || 1) - 1);
+    if (this._driveDepth > 0) return;
+    const tab = this._driveTab;
+    this._driveTab = null;
+    if (this.engine) {
+      this.engine.cursor = false;
+      this.engine.cursorLabel = '';
+    }
+    const payload = { type: 'driveEnd', tabId: /^\d+$/.test(String(tab || '')) ? Number(tab) : tab };
+    try { this.router.extNotify(payload); } catch (_) {}
+    try { if (this.locators) this.locators.persist(); } catch (_) {}
+  }
+
   async defaultTab(ctx) {
-    const s = this.sessions.get(ctx.sid);
-    if (s && s.lastTab) return s.lastTab;
+    const existing = await this.existingSessionTab(ctx);
+    if (existing) return existing.tab;
     const e = this.policyFor(ctx, 0);
     const { tabs } = await this.router.tabs();
     const vis = tabs.filter((t) => this.visibleTab(t, e));
@@ -355,7 +624,27 @@ export class Relay {
     if (h) return h.tab;
     throw new ApiError(404, e.grantMode === 'granted' && this.router.ext ? 'No tab to drive: grant a tab in the Luculent extension popup ("Let agents use this tab"), or open one with browser_tabs new.' : 'No tab to drive: open Chrome with the extension, or call tabs.new / headless.launch first.');
   }
-  remember(ctx, tab) { this.sessions.set(ctx.sid, { lastTab: String(tab) }); }
+  remember(ctx, tab) {
+    const rec = { lastTab: String(tab), updatedAt: Date.now(), keyId: ctx && ctx.key && ctx.key.id };
+    this.sessions.set(ctx.sid, rec);
+    if (rec.keyId) this.sessionByKey.set(String(rec.keyId), rec);
+    this._saveSessions();
+    this._enrichSession(ctx, rec, tab);
+  }
+  async _enrichSession(ctx, rec, tab) {
+    try {
+      if (this.router.isHeadless(String(tab))) return;
+      const listed = (await this.router.tabs()).tabs.find((x) => String(x.tab) === String(tab));
+      if (!listed) return;
+      rec.groupId = listed.groupId;
+      rec.profileId = listed.profileId;
+      rec.url = listed.url;
+      if (rec.keyId) this.sessionByKey.set(String(rec.keyId), rec);
+      this.sessions.set(ctx.sid, rec);
+      this._saveSessions();
+    } catch (_) {}
+  }
+
 
   async cap(ctx, e, name, req) {
     const v = e[name];
@@ -371,7 +660,11 @@ export class Relay {
     const a = s.action;
     let url = null;
     if (a === 'navigate' || a === 'goto') {
-      url = s.url && !/^[a-z][a-z0-9+.-]*:/i.test(s.url) ? 'https://' + s.url : s.url;
+      url = s.url && !hasUrlScheme(s.url) ? 'https://' + s.url : s.url;
+      const why = urlBlocked(e, url);
+      if (why) throw denyErr(why);
+    } else if (a === 'pdf' && s.url) {
+      url = hasUrlScheme(s.url) ? s.url : 'https://' + s.url;
       const why = urlBlocked(e, url);
       if (why) throw denyErr(why);
     } else {
@@ -389,7 +682,7 @@ export class Relay {
     else if (a === 'upload') g = await this.cap(ctx, e, 'uploads', req(`upload ${[].concat(s.files || s.file || []).map((f) => String(f).split(/[\\/]/).pop()).join(', ')}`));
     else if (a === 'downloads' && e.downloads === 'deny') throw denyErr('Downloads are turned off.');
     else if (['type', 'fill', 'press', 'key', 'click', 'dblclick'].includes(a) && (e.passwords !== 'allow' || e.submitSensitive !== 'allow' || e.confirmAll)) {
-      const tgt = a === 'press' || a === 'key' ? s.target ?? null : s.target;
+      const tgt = ['press', 'key', 'type', 'fill'].includes(a) ? s.target ?? null : s.target;
       let info = null;
       if (tgt !== undefined && !(a.includes('click') && tgt == null)) {
         try { info = await this.engine.helper(tab, 'inspect', [tgt], { frame: s.frame, retryUntil: Date.now() + Math.min(s.timeout || 5000, 5000) }); } catch (_) { info = null; }
@@ -413,20 +706,65 @@ export class Relay {
     this.need(ctx, steps.every((s) => READ_ACTIONS.has(s.action)) ? 'read' : 'act');
     const tab = String(p.tab ?? (await this.defaultTab(ctx)));
     const e = this.policyFor(ctx, tab);
+    let listed = null;
     if (!this.router.isHeadless(tab)) {
       const { tabs } = await this.router.tabs();
-      const t = tabs.find((x) => x.tab === tab);
-      if (t && !this.visibleTab(t, e)) throw denyErr(t.incognito ? 'incognito tabs are off limits' : 'this tab has not been granted to agents (use "Let agents use this tab" in the extension popup)');
+      listed = tabs.find((x) => String(x.tab) === String(tab));
+      if (listed && !this.visibleTab(listed, e)) throw denyErr(listed.incognito ? 'incognito tabs are off limits' : 'this tab has not been granted to agents (use "Let agents use this tab" in the extension popup)');
     }
     this.remember(ctx, tab);
     const actions = steps.map((s) => s.action);
+    const acting = steps.some((s) => !READ_ACTIONS.has(s.action));
+    if (this.pausedTabs.has(tab)) return { ok: false, event: 'paused', reason: this.pausedTabs.get(tab), tab, results: [], totalMs: 0 };
     try {
-      const r = await this.lock(tab, () => this.engine.run(tab, steps, {
-        stopOnError: p.stopOnError !== false, snapshot: p.snapshot || 'none', snapshotMax: p.snapshotMax, dialogs: p.dialogs,
-        redactPasswords: e.passwords !== 'allow', guard: (s) => this.guardStep(ctx, e, tab, s, steps),
-      }));
+      await this.beginDrive(ctx, tab);
+      let r;
+      let cowork = null;
+      try {
+        if (!p.fromPlan && listed) {
+          const g = await this.userGate(ctx, tab);
+          if (g && (g.stopped || g.timeout)) return { ok: false, event: g.stopped ? 'take-back' : 'paused', tab, results: [], totalMs: 0 };
+          if (g && g.userStepped) {
+            cowork = await this.coworkReport(tab, g);
+            // Cowork bounces the action so the agent re-reads your state first. After an explicit Resume (pause mode)
+            // you asked the AI to continue: run it, and attach the fresh state to the result instead.
+            if (acting && g.mode !== 'pause') {
+              this.audit(ctx, { method: 'run', tab, actions, result: 'cowork' });
+              return { ok: false, event: 'cowork', tab, results: [], cowork, totalMs: 0 };
+            }
+          }
+        }
+        let startUrl = null;
+        const guardStep = (s, i) => this.guardStep(ctx, e, tab, s, steps);
+        const guard = (!p.fromPlan && listed && steps.length > 1) ? async (s, i) => {
+          if (i === 0) { startUrl = await this.engine.currentUrl(tab).catch(() => null); return guardStep(s, i); }
+          if (this.interact.hasPending() || this.interact.paused) {
+            const g = await this.userGate(ctx, tab);
+            if (g && (g.stopped || g.timeout)) throw new Error('Paused: you clicked in the AI\'s tab');
+            if (g && g.userStepped) {
+              const now = await this.engine.currentUrl(tab).catch(() => null);
+              cowork = await this.coworkReport(tab, g);
+              const before = g.firstUrl || startUrl;
+              if (now !== before && !READ_ACTIONS.has(s.action)) throw new Error('The user stepped in and the page changed, so the rest of this batch was not run. Continue from the cowork state.');
+            }
+          }
+          return guardStep(s, i);
+        } : guardStep;
+        r = await this.lock(tab, () => this.engine.run(tab, steps, {
+          stopOnError: p.stopOnError !== false, snapshot: p.snapshot || 'none', snapshotMax: p.snapshotMax, dialogs: p.dialogs,
+          redactPasswords: e.passwords !== 'allow', guard,
+          cursor: (this.extSettings && this.extSettings.aiCursor === false) ? null : { label: this.driveLabel(ctx) },
+        }));
+      } finally { await this.endDrive(); }
+      if (cowork) { r.cowork = cowork; r.event = r.event || 'cowork'; }
+      if (r.ok) {
+        for (const s of steps) if ((s.action === 'navigate' || s.action === 'goto') && s.url) { const h = hostOf(s.url); if (h) this.seenHosts.add(h); }
+        for (const x of r.results || []) { const u = x && (x.url || (x.value && x.value.url)); if (u) { const h = hostOf(u); if (h) this.seenHosts.add(h); } }
+      }
       const denied = r.results.find((x) => x.denied);
       this.audit(ctx, { method: 'run', tab, actions, host: this.hostOf(r, steps), result: denied ? 'denied' : r.ok ? 'ok' : 'error', ...(denied ? { reason: denied.error.replace(/^Blocked by your Luculent security settings: /, '') } : {}), ms: r.totalMs });
+      if (listed && listed.incognito != null) r.incognito = !!listed.incognito;
+      if (p.recordNav !== false) this.recordNavFromRun(tab, r, steps);
       return r;
     } catch (err) {
       this.audit(ctx, { method: 'run', tab, actions, result: err.denied ? 'denied' : 'error', reason: String(err.message).slice(0, 200) });
@@ -442,6 +780,10 @@ export class Relay {
     if (!ctx.admin) {
       const e0 = this.policyFor(ctx, null);
       if (!this.limiter.take(ctx.key.id, e0.rateLimit)) { this.audit(ctx, { method, result: 'denied', reason: 'rate limit' }); throw new ApiError(429, `Rate limit: at most ${e0.rateLimit.perSecond} calls/s and ${e0.rateLimit.perMinute} calls/min for this key. Batch steps with browser_run.`); }
+      if (this.extSettings?.approveAccessMode && this.router.ext && !['status', 'policy.get', 'admin.resume', 'confirm.list', 'confirm.resolve'].includes(method)) {
+        const ok = await this.requestAccessApproval(ctx);
+        if (!ok) { this.audit(ctx, { method, result: 'denied', reason: 'connection not approved' }); throw denyErr('you did not approve this AI agent connection'); }
+      }
     }
     switch (method) {
       case 'status': {
@@ -462,8 +804,18 @@ export class Relay {
       }
       case 'tabs.new': {
         this.need(ctx, 'tabs');
-        if (p.source === 'headless') { this.need(ctx, 'headless'); if (this.policyFor(ctx, null).headless === 'deny') throw denyErr('Background (headless) Chrome is turned off.'); }
-        if (p.url) { const why = urlBlocked(this.policyFor(ctx, p.source === 'headless' ? 'h0:0' : 0), /^[a-z][a-z0-9+.-]*:/i.test(p.url) ? p.url : 'https://' + p.url); if (why) throw denyErr(why); }
+        const wantsHeadless = p.source === 'headless' || (!p.source && !this.router.ext);
+        if (wantsHeadless) this.assertHeadlessAllowed(ctx);
+        if (p.url) { const why = urlBlocked(this.policyFor(ctx, p.source === 'headless' ? 'h0:0' : 0), hasUrlScheme(p.url) ? p.url : 'https://' + p.url); if (why) throw denyErr(why); }
+        if (!p.force && !p.fresh) {
+          const existing = await this.existingSessionTab(ctx);
+          if (existing) {
+            this.remember(ctx, existing.tab);
+            if (p.url) await this.engine.navigate(existing.tab, { url: p.url, wait: p.wait || 'domcontentloaded' });
+            this.audit(ctx, { method: 'tabs.new', tab: existing.tab, result: 'reused' });
+            return { tab: existing.tab, url: p.url || existing.url, reused: true };
+          }
+        }
         const r = await this.router.newTab({ url: p.url, source: p.source === 'extension' ? 'ext' : p.source, active: p.active });
         this.remember(ctx, r.tab);
         this.audit(ctx, { method: 'tabs.new', tab: r.tab, result: 'ok' });
@@ -480,7 +832,12 @@ export class Relay {
         const results = await Promise.all(jobs.map(async (j) => {
           let tab = j.tab;
           try {
-            if (tab == null && j.newTab !== false) { this.need(ctx, 'tabs'); tab = (await this.router.newTab({ source: j.source === 'extension' ? 'ext' : j.source || (p.source === 'extension' ? 'ext' : p.source) })).tab; }
+            if (tab == null && j.newTab !== false) {
+              this.need(ctx, 'tabs');
+              const source = j.source === 'extension' ? 'ext' : j.source || (p.source === 'extension' ? 'ext' : p.source);
+              if (source === 'headless' || (!source && !this.router.ext)) this.assertHeadlessAllowed(ctx);
+              tab = (await this.router.newTab({ source })).tab;
+            }
             return await this.runOn({ ...ctx, sid: ctx.sid + ':' + tab }, { ...j, tab });
           } catch (e) { return { ok: false, tab, error: e.message }; }
         }));
@@ -533,14 +890,15 @@ export class Relay {
       case 'panel.hello': return this.panel.hello(ctx, p.clientInfo || p);
       case 'panel.identify': return this.panel.identify(ctx, p);
       case 'panel.post': {
-        const from = p.from === 'user' ? 'user' : 'agent';
+        const from = (p.from === 'user' && ctx.fromExtension) ? 'user' : 'agent';
         const m = this.panel.post(ctx, { from, text: p.text, pauseId: p.pauseId }, { id: p.id });
         this.syncPanel();
         return { message: m, view: this.panel.view(ctx, { id: p.id }) };
       }
       case 'panel.read': case 'panel.state': {
         const view = p.id ? this.panel.view(ctx, { id: p.id }) : this.panel.view(ctx);
-        return { view, sections: this.panel.sections(), pause: this.pauseFor(ctx), plan: this.plans.public(p.tab || view && this.plans.current && this.plans.current.tab) };
+        const tabKey = p.tab != null ? String(p.tab) : null;
+        return { view, sections: this.panel.sections(), pause: this.pauseFor(ctx), tabPause: tabKey ? (this.pausedTabs.get(tabKey) ?? null) : null, pausedTabs: Object.fromEntries(this.pausedTabs), plan: this.plans.public(p.tab || view && this.plans.current && this.plans.current.tab), interaction: this.interactionPublic() };
       }
       case 'panel.save': return this.panel.save(p.id || this.panel.sessionFor(ctx).id);
       case 'panel.delete': return { ok: this.panel.delete(p.id) };
@@ -548,8 +906,10 @@ export class Relay {
       case 'panel.open': return this.router.extCall({ type: 'openPanel', windowId: p.windowId });
       case 'panel.clickPull': return this.router.extCall({ type: 'panelClickPull' });
       case 'pageContext.pull': {
+        this.need(ctx, 'read');
         const tab = String(p.tab || '');
         if (!tab) throw new ApiError(400, 'pageContext.pull needs a tab');
+        await this.assertVisibleTab(ctx, tab);
         const listed = (await this.router.tabs()).tabs.find((x) => String(x.tab) === tab);
         const tabUrl = listed?.url || p.url;
         const e = this.policyFor(ctx, tab);
@@ -585,13 +945,16 @@ export class Relay {
       case 'panel.resume': {
         const id = p.id;
         const wait = this.humanPauses.get(id);
-        if (wait) { wait.resolve({ resumed: true, reply: p.text || '' }); this.humanPauses.delete(id); }
+        if (wait) {
+          if (!ctx.fromExtension && !ctx.admin && wait.keyId && ctx.key?.id !== wait.keyId) throw new ApiError(403, 'Only the waiting session or the extension can resume this pause');
+          wait.resolve({ resumed: true, reply: p.text || '' }); this.humanPauses.delete(id);
+        }
         this.syncPanel();
         return { ok: true };
       }
       case 'pause_for_human': return this.pauseForHuman(ctx, p);
       case 'flow.record': this.flows.start(p.name || 'flow'); return { recording: true, name: this.flows.recording.name };
-      case 'flow.step': return { n: this.flows.record(p.step || p) };
+      case 'flow.step': return await this.recordFlowStep(ctx, p);
       case 'flow.stop': return this.flows.stop();
       case 'flow.list': return { flows: this.flows.list() };
       case 'flow.get': return this.flows.get(p.name);
@@ -609,6 +972,14 @@ export class Relay {
         const exts = this.router.listProfiles ? this.router.listProfiles() : (this.router.extInfo ? [this.router.extInfo] : []);
         return { profiles: exts };
       }
+      case 'audit.page': {
+        this.need(ctx, 'read');
+        const tab = String(p.tab ?? (await this.defaultTab(ctx)));
+        await this.assertVisibleTab(ctx, tab);
+        const kind = ['click', 'visual', 'code', 'all'].includes(p.kind) ? p.kind : 'all';
+        const expr = `(${runInPageAudit.toString()})(${JSON.stringify(kind)})`;
+        return await this.engine.evaluate(tab, expr);
+      }
       case 'setup': {
         // Trusted path: paired extension or admin key. Reports paths only, never the API key.
         if (!ctx.fromExtension) this.need(ctx, 'admin');
@@ -622,7 +993,8 @@ export class Relay {
       }
       case 'plan.set': case 'plan.start': {
         const tab = p.tab || await this.defaultTab(ctx).catch(() => null);
-        const pub = this.plans.set({ ...p, tab });
+        const steps = Array.isArray(p.steps) ? await this.frameFor(tab, p.steps) : p.steps;
+        const pub = this.plans.set({ ...p, steps, tab });
         this.syncPanel();
         return { plan: pub };
       }
@@ -633,7 +1005,9 @@ export class Relay {
         return r;
       }
       case 'plan.confirm': {
+        this.need(ctx, 'read');
         const tab = String(p.tab || (this.plans.get(p.tab) && this.plans.get(p.tab).tab) || await this.defaultTab(ctx));
+        await this.assertVisibleTab(ctx, tab);
         const result = await this.plans.confirm(this.engine, tab, p.expect, { visionWhenNeeded: p.visionWhenNeeded !== false });
         this.syncPanel();
         return result;
@@ -646,11 +1020,49 @@ export class Relay {
       case 'plan.run': case 'plan.next': {
         this.need(ctx, 'act');
         const tab = String(p.tab || await this.defaultTab(ctx));
-        const out = await this.plans.run(this.engine, (c, req) => this.runOn(c, req), ctx, { ...p, tab });
+        await this.assertVisibleTab(ctx, tab);
+        await this.beginDrive(ctx, tab);
+        let out;
+        try {
+          out = await this.plans.run(this.engine, (c, req) => this.runOn(c, { ...req, recordNav: false, fromPlan: true }), ctx, {
+            ...p, tab, checkUrl: (url) => urlBlocked(this.policyFor(ctx, tab), url),
+            prefetch: (tb, step) => this.engine.prefetch(tb, step),
+            shouldStop: () => this._takenBack,
+            frame: (steps) => this.frameFor(tab, steps),
+            beforeStep: () => this.userGate(ctx, tab),
+          });
+        } finally { await this.endDrive(); }
+        let incognito = false;
+        if (!this.router.isHeadless(tab)) {
+          const listed = (await this.router.tabs()).tabs.find((x) => String(x.tab) === String(tab));
+          incognito = !!(listed && listed.incognito);
+        }
+        this.recordNavFromPlan(tab, out, incognito);
         this.syncPanel();
         return out;
       }
-      case 'chats.purge': return { removed: this.panel.purge().length };
+      case 'interaction.get': return { mode: this.clickMode(), modes: CLICK_MODES, labels: CLICK_MODE_LABELS, status: this.interactionPublic() };
+      case 'interaction.set': {
+        this.need(ctx, 'act');
+        const mode = normalizeClickMode(p.mode);
+        this._clickModeOverride = mode;
+        this.interact.setMode(mode);
+        try { this.router.extNotify({ type: 'setClickMode', mode }); } catch (_) {}
+        this.audit(ctx, { method: 'interaction.set', result: 'ok', mode });
+        this.syncPanel();
+        return { mode, modes: CLICK_MODES, labels: CLICK_MODE_LABELS };
+      }
+      case 'interaction.resume': {
+        if (!ctx.fromExtension) this.need(ctx, 'admin');
+        this.interact.resume();
+        this.notifyInteraction(this._watchTab, 'resumed');
+        return { ok: true };
+      }
+      case 'plan.priors': return lookupPriors(this.priors, { url: p.url, domain: p.domain, path: p.path });
+      case 'meta.status': return this.meta.status();
+      case 'meta.consent': if (!ctx.fromExtension) this.need(ctx, 'admin'); return this.meta.setConsent(p);
+      case 'meta.purge': if (!ctx.fromExtension) this.need(ctx, 'admin'); return this.meta.purge();
+      case 'chats.purge': if (!ctx.fromExtension) this.need(ctx, 'admin'); return { removed: this.panel.purge().length };
       default:
         if (STEP_METHODS.has(method)) {
           const { tab, snapshot, ...step } = p;
@@ -660,6 +1072,76 @@ export class Relay {
         }
         throw new ApiError(404, `Unknown method ${method}`);
     }
+  }
+
+
+  async frameFor(tab, steps) {
+    let startUrl = '';
+    try { if (tab != null) startUrl = await this.engine.currentUrl(String(tab)); } catch (_) {}
+    return frameSteps(steps, { startUrl, priors: this.priors, locators: this.locators, seen: this.seenHosts });
+  }
+
+  applyNavMeta(nav) {
+    if (!nav || !this.meta) return this.meta && this.meta.status();
+    // Regional defaults (setByUser !== true) stay in memory on the extension. Applying them
+    // here would write the relay consent file and can overwrite a prior user choice.
+    if (nav.setByUser !== true) return this.meta.status();
+    return this.meta.setConsent({
+      consented: nav.consented,
+      setByUser: true,
+      seenDisclaimer: nav.seenDisclaimer,
+    });
+  }
+
+  recordNavFromRun(tab, r, steps, plan) {
+    try {
+      if (!this.meta || !this.meta.consent.consented) return;
+      const url = (r && (r.url || r.finalUrl)) || (r && r.snapshot && r.snapshot.url)
+        || (plan && plan.confirmed && plan.confirmed.url)
+        || (r && r.results && r.results.map((x) => x && (x.url || (x.value && x.value.url))).filter(Boolean).pop());
+      if (!url) return;
+      const incognito = !!(r && r.incognito);
+      const sequence = (steps || []).map((s) => s && s.action).filter(Boolean);
+      const last = steps && steps[steps.length - 1];
+      this.meta.record({
+        url,
+        incognito,
+        action: last && last.action,
+        sequence,
+        element: last && last.target ? { selector: last.target, role: last.role } : undefined,
+        ok: !!(r && r.ok !== false),
+        timings: { totalMs: r && r.totalMs, actionMs: last && last.ms },
+        plan,
+      });
+    } catch (_) { /* collection must never break driving */ }
+  }
+
+  recordNavFromPlan(tab, out, incognito = false) {
+    try {
+      if (!this.meta || !this.meta.consent.consented || !out) return;
+      const results = out.results || [];
+      for (const step of results) {
+        const confirm = step.confirm || {};
+        const url = (confirm.state && confirm.state.url) || (out.confirmed && out.confirmed.url);
+        if (!url) continue;
+        this.meta.record({
+          url,
+          incognito: !!incognito,
+          action: (step.run && step.run.action) || 'step',
+          sequence: results.map((s) => s.run && s.run.action).filter(Boolean),
+          element: step.run && step.run.value ? { role: step.run.value.role, selector: step.run.target || (step.run.value && step.run.value.ref) } : undefined,
+          ok: step.ok !== false && confirm.matched !== false,
+          timings: { actionMs: step.runMs, confirmMs: confirm.ms, totalMs: step.runMs },
+          plan: {
+            matched: confirm.matched === true,
+            replan: out.event === 'replan',
+            adjusted: out.event === 'adjusted',
+            reason: (out.last && out.last.reason) || (confirm.failed && confirm.failed.length ? 'expect-miss' : undefined),
+            failed: confirm.failed,
+          },
+        });
+      }
+    } catch (_) { /* collection must never break driving */ }
   }
 
   authFromReq(req, url) {
@@ -685,7 +1167,7 @@ export class Relay {
 
 
   syncPanel() {
-    const payload = { type: 'panel.sync', sections: this.panel.sections(), pause: this.humanPauses.size ? [...this.humanPauses.values()].map((x) => x.public)[0] : null, plan: this.plans.public() };
+    const payload = { type: 'panel.sync', sections: this.panel.sections(), pause: this.humanPauses.size ? [...this.humanPauses.values()].map((x) => x.public)[0] : null, plan: this.plans.public(), interaction: this.interactionPublic() };
     this.router.extNotify(payload);
   }
   pauseFor(ctx) {
@@ -785,7 +1267,9 @@ export class Relay {
         const mac = m.nonce ? createHmac('sha256', Buffer.from(secret, 'hex')).update(String(m.nonce)).digest('hex') : null;
         ws.send(JSON.stringify({ type: 'auth', mac, ...(m.paired ? {} : { secret }) }));
         if (m.settings) this.extSettings = normalize(m.settings);
+        if (m.navMeta) this.applyNavMeta(m.navMeta);
         ws.send(JSON.stringify({ type: 'policy', policy: this.policy.get() }));
+        ws.send(JSON.stringify({ type: 'navMeta', navMeta: this.meta.status(), consentTitle: CONSENT_TITLE, privacy: PRIVACY_POLICY_URL }));
         if (this.killed) ws.send(JSON.stringify({ type: 'killed' }));
         for (const p of this.pendingList()) ws.send(JSON.stringify({ type: 'confirm', ...p }));
         return;
@@ -793,20 +1277,40 @@ export class Relay {
       if (m.type === 'settings') {
         // Changed in the popup/options page: becomes the global policy and binds extension tabs.
         this.extSettings = normalize(m.settings);
+        this._clickModeOverride = null;
+        this._panelDisableWindow = false;
+        this.interact.setMode(this.clickMode());
         if (m.persist !== false) { const r = this.policy.set(m.settings); this.router.setDownloadPolicy(r.downloads === 'deny' ? 'deny' : 'allow'); }
         this.audit(null, { method: 'settings', result: 'ok', source: 'extension' });
         return;
       }
+      if (m.type === 'navMeta') { this.applyNavMeta(m.navMeta || m); return; }
+      if (m.type === 'takeBack') { this._takenBack = true; try { this.router.extNotify({ type: 'driveEnd', tabId: m.tabId }); } catch (_) {} return; }
+      if (m.type === 'disableWindow') { this._panelDisableWindow = !!m.on; this.extSettings = { ...this.extSettings, disableWindow: !!m.on, clickMode: m.on ? 'disable' : 'cowork' }; this._clickModeOverride = null; this.interact.setMode(this.clickMode()); return; }
+      if (m.type === 'clickMode') { this.extSettings = { ...(this.extSettings || {}), clickMode: normalizeClickMode(m.mode), disableWindow: normalizeClickMode(m.mode) === 'disable' }; this._panelDisableWindow = false; this._clickModeOverride = null; this.interact.setMode(this.clickMode()); this.syncPanel(); return; }
+      if (m.type === 'userInput') { this.onUserInput(m); return; }
+      if (m.type === 'interactionResume') { this.interact.resume(); this.notifyInteraction(this._watchTab, 'resumed'); return; }
+      if (m.type === 'pauseTab') {
+        const key = String(m.tabId);
+        if (m.pause) this.pausedTabs.set(key, m.reason || 'Paused by user');
+        else this.pausedTabs.delete(key);
+        this.syncPanel();
+        return;
+      }
+      if (m.type === 'aiCursor') { this.extSettings = { ...this.extSettings, aiCursor: m.on !== false }; return; }
+
       if (m.type === 'confirmResult') { this.resolveConfirm(m.id, !!m.allow); this.audit(null, { method: 'confirm', id: m.id, result: m.allow ? 'approved' : 'declined', source: 'extension' }); return; }
+      if (m.type === 'accessResult') { this.resolveAccess(m.id, !!m.allow, m.scope); this.audit(null, { method: 'access', id: m.id, result: m.allow ? `approved (${m.scope || 'once'})` : 'declined', source: 'extension' }); return; }
       if (m.type === 'resume') { this.resume(); return; }
       if (m.type === 'event') { this.router.onEvent(String(m.tabId), m.method, m.params || {}, m.sessionId); return; }
-      if (m.type === 'tabClosed' || m.type === 'detached') { this.engine.forget(String(m.tabId)); if (m.type === 'tabClosed') { this.panel.closeByTab(m.tabId, 'tab-closed'); this.syncPanel(); } return; }
+      if (m.type === 'tabClosed' || m.type === 'detached') { this.engine.forget(String(m.tabId)); if (m.type === 'tabClosed') { this.pausedTabs.delete(String(m.tabId)); this.panel.closeByTab(m.tabId, 'tab-closed'); this.syncPanel(); } return; }
       if (m.type === 'kill') { this.kill('extension popup'); return; }
       if (m.type === 'groupClosed') { this.panel.closeByGroup(m.groupId, 'group-closed'); this.syncPanel(); return; }
       if (m.type === 'chats.purge') { this.panel.purge(); this.syncPanel(); return; }
       if (m.type === 'setup' || (m.type && String(m.type).startsWith('panel.'))) {
         const ctx = { fromExtension: true, admin: true, key: { id: 'extension', name: 'extension' } };
-        this.call(m.type, m, ctx).then((result) => { if (m.id != null) try { ws.send(JSON.stringify({ id: m.id, result })); } catch (_) {} })
+        const params = { ...m, id: m.chatId != null ? m.chatId : undefined };
+        this.call(m.type, params, ctx).then((result) => { if (m.id != null) try { ws.send(JSON.stringify({ id: m.id, result })); } catch (_) {} })
           .catch((e) => { if (m.id != null) try { ws.send(JSON.stringify({ id: m.id, error: e.message })); } catch (_) {} });
         return;
       }
@@ -848,6 +1352,9 @@ export class Relay {
   }
 
   async stop() {
+    try { await this.endDrive(); } catch (_) {}
+    try { if (this.locators) this.locators.persist(); } catch (_) {}
+    try { this._saveSessions(); } catch (_) {}
     for (const ws of this.agents) { try { ws.terminate(); } catch (_) {} }
     if (this.router.ext) { try { this.router.ext.terminate(); } catch (_) {} }
     for (const p of this.pending.values()) p.resolve(false);

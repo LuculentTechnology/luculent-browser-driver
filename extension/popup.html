@@ -1,44 +1,141 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>Luculent Browser Driver for AI Agents</title><style>
-body{font:13px system-ui,sans-serif;margin:0;padding:14px;width:300px;background:#0b0b0f;color:#e5e7eb}
-h1{font-size:14px;margin:0 0 10px} .row{display:flex;justify-content:space-between;align-items:center;margin:6px 0}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
-button{width:100%;padding:8px;border:0;border-radius:8px;margin-top:8px;cursor:pointer;font-weight:600}
-#kill{background:#dc2626;color:#fff;font-size:15px;padding:12px} #kill.resume{background:#16a34a}
-.sec{border-top:1px solid #27272a;margin-top:10px;padding-top:8px} .sec h2{font-size:12px;color:#9ca3af;margin:0 0 4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-#rc,#grant{background:#27272a;color:#e5e7eb} #grant.on{background:#4f46e5}
-small{color:#9ca3af} label{display:flex;justify-content:space-between;align-items:center;margin:5px 0;cursor:pointer}
-.modes{display:flex;gap:6px;margin:0 0 10px}.modes:empty,.modes.single{display:none}.modes button{width:auto;margin:0;padding:4px 10px;background:#27272a;color:#e5e7eb;font-weight:500}.modes button.on{background:#4f46e5}
-.pend{background:#422006;border:1px solid #f59e0b;border-radius:8px;padding:8px;margin:6px 0}.pend b{color:#fcd34d}.pend .btns{display:flex;gap:6px}.pend button{margin-top:6px;padding:6px}
-.ok{background:#16a34a;color:#fff}.no{background:#3f3f46;color:#fff}
-#log{max-height:120px;overflow:auto;font-size:11px;line-height:1.45} #log div{border-bottom:1px solid #18181b;padding:2px 0} .denied{color:#fca5a5}
-a{color:#a5b4fc;text-decoration:none} .pb{margin:12px 0 0;text-align:center;border-top:1px solid #27272a;padding-top:10px;font-size:12px}
-</style></head><body>
-<h1>Luculent Browser Driver <small>for AI Agents</small></h1>
-<nav id="modes" class="modes"></nav>
-<section data-mode="driver">
-<button id="kill">Killswitch: stop all agents</button>
-<div class="row"><span>Relay</span><span id="st">.</span></div>
-<div class="row"><span>Tabs under agent control</span><span id="at">0</span></div>
-<div id="pending"></div>
-<div class="sec"><h2>This tab</h2>
-<button id="grant">Let agents use this tab</button>
-<small id="grantNote"></small></div>
-<div class="sec"><h2>Quick security</h2>
-<label>Read-only mode (no clicks or typing) <input type="checkbox" id="q_readOnly"></label>
-<label>Let agents read and type passwords <input type="checkbox" id="q_passwords"></label>
-<label>Let agents run JavaScript <input type="checkbox" id="q_eval"></label>
-<a href="#" id="opts">All security settings and full activity log</a></div>
-<div class="sec"><h2>Recent agent activity</h2><div id="log"><small>Nothing yet.</small></div></div>
-<button id="rc">Reconnect to relay</button>
-<div class="sec" id="bannerSec">
-<a href="#" id="bannerHelp">What is this banner?</a>
-<p id="bannerExplain" hidden style="margin:8px 0 0;color:#d1d5db;line-height:1.45"></p>
-</div>
-<button id="chat" style="background:#4f46e5;color:#fff">Open chat panel</button>
-<button id="setup" style="background:#27272a;color:#e5e7eb">Set up agents</button>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Luculent Browser Driver</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="ui.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body class="popup driver-popup">
+  <header class="driver-header">
+    <div class="brand">
+      <img class="mark" src="icons/luculent-favicon.svg" width="28" height="28" alt="">
+      <div class="titles">
+        <h1 class="wm">Luculent</h1>
+        <p>Browser Driver</p>
+      </div>
+    </div>
+    <a class="driver-account" href="https://luculent.dev/beta/account" target="_blank" rel="noopener noreferrer" aria-label="Open Luculent account" title="Open Luculent account">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <circle cx="12" cy="8" r="3.25"></circle>
+        <path d="M5.75 20v-1.25a6.25 6.25 0 0 1 12.5 0V20"></path>
+      </svg>
+    </a>
+  </header>
+  <main class="driver-main">
+    <nav class="driver-tabs" role="tablist" aria-label="Browser Driver views">
+      <button id="tabControlBtn" class="driver-tab is-active" role="tab" aria-selected="true" aria-controls="tabControlPanel" data-tab="control" type="button">Control</button>
+      <button id="tabTestingBtn" class="driver-tab" role="tab" aria-selected="false" aria-controls="tabTestingPanel" data-tab="testing" type="button">Testing</button>
+    </nav>
 
-</section>
-<p class="pb"><a href="https://luculent.dev/beta?utm_source=browser-driver&utm_medium=extension" target="_blank" rel="noopener">Built by <b>Luculent</b>. Join the beta</a></p>
-<script type="module" src="popup.js"></script>
-</body></html>
+    <div id="tabControlPanel" class="driver-tab-panel" role="tabpanel" aria-labelledby="tabControlBtn">
+      <div class="driver-status">
+        <span class="driver-label">This tab</span>
+        <span id="st" class="driver-connection" data-state="offline">Connecting</span>
+      </div>
+      <section class="driver-card driver-current" aria-labelledby="agent">
+        <div class="driver-identity">
+          <div>
+            <h2 id="agent">No active agent</h2>
+            <p id="model" class="muted" hidden></p>
+          </div>
+          <button id="pause" type="button" disabled>Pause</button>
+        </div>
+        <dl id="taskDetails" class="driver-task" hidden>
+          <div id="chatRow" hidden><dt>Chat</dt><dd id="chatName"></dd></div>
+          <div><dt>Task</dt><dd id="task"></dd></div>
+        </dl>
+        <div class="driver-tools">
+          <button id="grant" class="btn-quiet" type="button" disabled>Let agents use this tab</button>
+          <button id="release" class="btn-quiet" type="button" hidden>Release tab</button>
+        </div>
+        <p id="notice" class="driver-notice" role="status" hidden></p>
+      </section>
+      <section id="pending" class="driver-pending" aria-label="Approval requests" hidden></section>
+      <section class="driver-card" aria-labelledby="actionsHeading">
+        <h2 id="actionsHeading" class="driver-label">Task actions</h2>
+        <ol id="actions" class="driver-actions" tabindex="0" aria-labelledby="actionsHeading"></ol>
+        <p id="emptyActions" class="driver-empty">Actions appear here while an agent works in this tab.</p>
+      </section>
+    </div>
+
+    <div id="tabTestingPanel" class="driver-tab-panel" role="tabpanel" aria-labelledby="tabTestingBtn" hidden>
+      <section class="driver-card testing-card" aria-labelledby="testingHeading">
+        <div class="testing-head">
+          <div>
+            <h2 id="testingHeading" class="driver-label">Page diagnostics &amp; AI test runner</h2>
+            <p class="testing-sub">Run a comprehensive suite on this tab. Generates a Luculent remediation plan for approval—or use the arrow menu to fix immediately.</p>
+          </div>
+        </div>
+        <div class="testing-suites">
+          <div class="split-action" data-suite="click">
+            <button type="button" class="split-main btn-gold" data-run-suite="click">
+              <span class="suite-title">Click Test</span>
+              <span class="suite-desc">Full interactive sweep, handlers, links &amp; forms</span>
+            </button>
+            <button type="button" class="split-arrow btn-gold" data-toggle-menu="click" aria-haspopup="true" aria-expanded="false" aria-label="Click Test options" title="More options">▾</button>
+            <div class="split-menu" id="menu-click" role="menu" hidden>
+              <button type="button" role="menuitem" data-run-suite="click" data-fix-now="true">Fix immediately <small>Skips approval step</small></button>
+            </div>
+          </div>
+
+          <div class="split-action" data-suite="visual">
+            <button type="button" class="split-main btn-quiet" data-run-suite="visual">
+              <span class="suite-title">Visual Check</span>
+              <span class="suite-desc">Overflow, clipping, overlaps &amp; broken media</span>
+            </button>
+            <button type="button" class="split-arrow btn-quiet" data-toggle-menu="visual" aria-haspopup="true" aria-expanded="false" aria-label="Visual Check options" title="More options">▾</button>
+            <div class="split-menu" id="menu-visual" role="menu" hidden>
+              <button type="button" role="menuitem" data-run-suite="visual" data-fix-now="true">Fix immediately <small>Skips approval step</small></button>
+            </div>
+          </div>
+
+          <div class="split-action" data-suite="code">
+            <button type="button" class="split-main btn-quiet" data-run-suite="code">
+              <span class="suite-title">Code Check</span>
+              <span class="suite-desc">DOM IDs, ARIA/form semantics &amp; failed assets</span>
+            </button>
+            <button type="button" class="split-arrow btn-quiet" data-toggle-menu="code" aria-haspopup="true" aria-expanded="false" aria-label="Code Check options" title="More options">▾</button>
+            <div class="split-menu" id="menu-code" role="menu" hidden>
+              <button type="button" role="menuitem" data-run-suite="code" data-fix-now="true">Fix immediately <small>Skips approval step</small></button>
+            </div>
+          </div>
+        </div>
+        <p id="testNotice" class="driver-notice" role="status" hidden></p>
+      </section>
+
+      <section id="testReportCard" class="driver-card testing-report" aria-labelledby="reportHeading" hidden>
+        <div class="report-top">
+          <div>
+            <span id="reportBadge" class="eyebrow">CLICK TEST REPORT</span>
+            <h3 id="reportHeading" class="report-title">No report yet</h3>
+          </div>
+          <span id="reportStatusPill" class="driver-connection" data-state="ready">Plan ready</span>
+        </div>
+        <div id="reportMetrics" class="report-metrics"></div>
+        <ol id="reportPlanList" class="report-plan-list"></ol>
+        <div id="reportChatSummary" class="report-chat-box" hidden></div>
+        <div class="report-actions">
+          <button id="approveReportBtn" type="button" class="btn-gold">Approve &amp; Patch</button>
+          <button id="displayInChatBtn" type="button" class="btn-quiet">Display in chat</button>
+          <button id="downloadReportBtn" type="button" class="btn-quiet">Download 1-page plan</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="driver-tools">
+      <button id="opts" class="btn-quiet" type="button">Settings</button>
+      <button id="openWorkspace" class="btn-quiet" type="button">Open workspace</button>
+      <button id="rc" type="button" hidden>Reconnect</button>
+    </div>
+    <p class="driver-help-row"><a id="bannerHelp" href="options.html#bannerCard" target="_blank" rel="noopener noreferrer">What is this banner?</a></p>
+  </main>
+  <footer class="driver-footer">
+    <a href="https://luculent.dev/beta?utm_source=browser-driver&amp;utm_medium=extension" target="_blank" rel="noopener noreferrer">Built by <b>Luculent</b>. Join the beta.</a>
+  </footer>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

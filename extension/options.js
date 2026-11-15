@@ -1,4 +1,7 @@
 import { loadSettings, saveSettings } from './settings.js';
+import { loadAccount, openSignIn, signOutLocal } from './account-sync.js';
+import { loadNavMeta, saveNavMeta, CONSENT_TITLE, CONSENT_BODY, PRIVACY_POLICY_URL, toggleCaption } from './consent.js';
+import { playPingSound } from './ping.js';
 const $ = (id) => document.getElementById(id);
 const msg = (m) => new Promise((r) => chrome.runtime.sendMessage(m, r));
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -16,7 +19,19 @@ async function fill() {
   }
   const { relayUrl } = await chrome.storage.local.get(['relayUrl']);
   $('url').value = relayUrl || '';
+  const nav = await loadNavMeta();
+  $('navMetaTitle').textContent = CONSENT_TITLE;
+  $('navMetaBody').textContent = CONSENT_BODY;
+  $('navMetaCaption').textContent = toggleCaption(nav);
+  $('navMetaOn').checked = !!nav.consented;
+  $('navMetaPrivacy').href = PRIVACY_POLICY_URL;
 }
+$('navMetaOn').addEventListener('change', async () => {
+  const nav = await saveNavMeta({ consented: $('navMetaOn').checked, setByUser: true, seenDisclaimer: true });
+  $('navMetaCaption').textContent = toggleCaption(nav);
+  $('saved').textContent = 'Saved';
+  setTimeout(() => { $('saved').textContent = ''; }, 1200);
+});
 document.addEventListener('change', async (e) => {
   const el = e.target;
   if (!el.dataset || !el.dataset.k) return;
@@ -29,6 +44,7 @@ document.addEventListener('change', async (e) => {
   renderTabs();
 });
 $('url').onchange = () => chrome.storage.local.set({ relayUrl: $('url').value.trim() || undefined });
+if ($('testPing')) $('testPing').onclick = () => { void playPingSound($('pingSound')?.value || 'chime'); };
 $('repair').onclick = async () => { await msg({ type: 'popup.repair' }); $('repair').textContent = 'Re-paired'; };
 $('kill').onclick = async () => { const s = await msg({ type: 'popup.status' }); await msg({ type: s.killed ? 'popup.resume' : 'popup.kill' }); render(); };
 
@@ -49,3 +65,24 @@ async function render() {
   $('log').innerHTML = log.length ? log.map((e) => `<div class="${e.result === 'denied' ? 'denied' : ''}">${esc((e.t || '').replace('T', ' ').slice(0, 19))} ${esc(e.key || e.source || '')} ${esc(e.actions ? e.actions.join(',') : e.method || '')} ${esc(e.host || '')} ${esc(e.result || '')} ${esc(e.reason || '')}</div>`).join('') : '<small>Nothing yet.</small>';
 }
 fill(); renderTabs(); render(); setInterval(render, 1500);
+async function renderAccount() {
+  const rec = await loadAccount();
+  const status = document.getElementById('accountStatus');
+  const signIn = document.getElementById('accountSignIn');
+  const signOut = document.getElementById('accountSignOut');
+  if (!status || !signIn || !signOut) return;
+  if (rec) {
+    status.innerHTML = '<small>Signed in. Settings sync to this Luculent account.</small>';
+    signIn.hidden = true;
+    signOut.hidden = false;
+  } else {
+    status.innerHTML = '<small>Not signed in. Settings stay on this browser.</small>';
+    signIn.hidden = false;
+    signOut.hidden = true;
+  }
+}
+const accountSignIn = document.getElementById('accountSignIn');
+const accountSignOut = document.getElementById('accountSignOut');
+if (accountSignIn) accountSignIn.onclick = () => openSignIn();
+if (accountSignOut) accountSignOut.onclick = async () => { await signOutLocal(); renderAccount(); };
+renderAccount();

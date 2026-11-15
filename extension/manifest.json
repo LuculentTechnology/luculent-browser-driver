@@ -16,7 +16,8 @@
     "webNavigation",
     "sidePanel",
     "tabGroups",
-    "scripting"
+    "scripting",
+    "offscreen"
   ],
   "background": {
     "service_worker": "sw.js",
@@ -59,5 +60,13 @@
   ],
   "side_panel": {
     "default_path": "panel.html"
+  },
+  "externally_connectable": {
+    "matches": [
+      "https://luculent.dev/*",
+      "https://www.luculent.dev/*",
+      "https://luculent.app/*",
+      "https://www.luculent.app/*"
+    ]
   }
 }

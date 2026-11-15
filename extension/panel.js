@@ -1,4 +1,6 @@
-// Side panel chat: talk to the agent driving this browser.
+// Side panel chat: talk to the agent driving this browser (LUC-3083, LUC-3084, LUC-3085).
+import { loadNavMeta, saveNavMeta, CONSENT_TITLE, CONSENT_BODY, PRIVACY_POLICY_URL, toggleCaption } from './consent.js';
+import { loadSettings, CLICK_MODES } from './settings.js';
 const $ = (id) => document.getElementById(id);
 const msg = (m) => new Promise((r) => chrome.runtime.sendMessage(m, r));
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -6,12 +8,57 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 let section = 'active';
 let currentId = null;
 
+const pageParams = new URLSearchParams(location.search);
+const inWorkspace = pageParams.get('workspace') === '1';
+const rawTab = pageParams.get('tab');
+const sourceTab = rawTab && /^\d+$/.test(rawTab) && Number.isSafeInteger(Number(rawTab)) ? Number(rawTab) : null;
+document.body.classList.toggle('workspace-embedded', inWorkspace);
+if (inWorkspace) {
+  const navMeta = $('navMeta');
+  const disclosure = document.createElement('details');
+  disclosure.className = 'workspace-disclosure';
+  const summary = document.createElement('summary');
+  summary.textContent = 'Navigation metadata and privacy';
+  navMeta.before(disclosure);
+  disclosure.append(summary, navMeta);
+}
+if (inWorkspace && sourceTab == null) {
+  $('pull').disabled = true;
+  $('pull').title = 'Open the workspace from a web page to pull its context';
+  $('chipRefresh').disabled = true;
+}
+
 function paintStatus(s) {
   const on = s && s.connected && !s.killed;
-  $('st').querySelector('.dot').style.background = s && s.killed ? '#dc2626' : on ? '#16a34a' : '#6b7280';
+  $('st').querySelector('.dot').style.background = s && s.killed ? '#FF5C7A' : on ? '#4ADE80' : '#7A7A80';
   $('stText').textContent = s && s.killed ? 'stopped' : on ? 'connected' : (s && s.relayState === 'untrusted' ? 'untrusted relay' : 'offline');
   $('kill').textContent = s && s.killed ? 'Resume' : 'Killswitch';
   $('kill').classList.toggle('resume', !!(s && s.killed));
+  const cm = $('clickMode');
+  if (cm && s && s.settings && document.activeElement !== cm) cm.value = CLICK_MODES.includes(s.settings.clickMode) ? s.settings.clickMode : 'cowork';
+}
+
+function paintInteraction(it) {
+  const el = $('cowork');
+  if (!el) return;
+  const state = it && it.state;
+  if (state === 'paused' && it.paused) {
+    el.hidden = false;
+    el.className = 'cowork-note paused';
+    el.innerHTML = '<span class="dot"></span><span class="txt"><b>Paused</b><small>You clicked in the AI\u2019s tab. It continues from the page as you leave it.</small></span><button type="button" id="userResume" class="primary">Resume</button>';
+    $('userResume').onclick = async () => { await msg({ type: 'panel.resumeUser' }); refresh(); };
+  } else if (state === 'cowork' && it.active) {
+    el.hidden = false;
+    el.className = 'cowork-note';
+    el.innerHTML = '<span class="dot"></span><span class="txt"><b>You\u2019re coworking</b><small>The AI waits, then continues from where you leave it.</small></span>';
+  } else if (state === 'resumed' || (state === 'cowork' && !it.active)) {
+    el.hidden = false;
+    el.className = 'cowork-note';
+    el.innerHTML = '<span class="dot"></span><span class="txt"><b>The AI picks up from here</b><small>It re-read the page after your help.</small></span>';
+  } else {
+    el.hidden = true;
+    el.innerHTML = '';
+  }
 }
 
 function paintChat(view) {
@@ -105,8 +152,24 @@ async function refresh() {
     } else paintChat(null);
   }
   paintPause(data && data.pause);
+  paintInteraction(data && data.interaction);
   paintPlan(data && data.plan);
+  await paintNavMeta();
 }
+
+async function paintNavMeta() {
+  const nav = await loadNavMeta();
+  $('navMetaTitle').textContent = CONSENT_TITLE;
+  $('navMetaCaption').textContent = toggleCaption(nav);
+  $('navMetaOn').checked = !!nav.consented;
+  $('navMetaPrivacy').href = PRIVACY_POLICY_URL;
+  $('navMetaBody').textContent = nav.seenDisclaimer ? '' : CONSENT_BODY;
+}
+
+$('navMetaOn').onchange = async () => {
+  await saveNavMeta({ consented: $('navMetaOn').checked, setByUser: true, seenDisclaimer: true });
+  paintNavMeta();
+};
 
 for (const b of document.querySelectorAll('#sects button')) {
   b.onclick = () => {
@@ -126,8 +189,19 @@ $('list').onclick = async (e) => {
   refresh();
 };
 $('kill').onclick = async () => { const s = await msg({ type: 'popup.status' }); await msg({ type: s.killed ? 'popup.resume' : 'popup.kill' }); refresh(); };
-$('pull').onclick = async () => { const r = await msg({ type: 'panel.pull' }); if (r && r.error) $('log').insertAdjacentHTML('beforeend', `<div class="msg system">${esc(r.error)}</div>`); refresh(); };
-$('chipRefresh').onclick = () => msg({ type: 'panel.pull' }).then(refresh);
+$('clickMode').onchange = async () => { await msg({ type: 'panel.clickMode', mode: $('clickMode').value }); refresh(); };
+loadSettings().then((s) => { $('clickMode').value = s.clickMode || 'cowork'; }).catch(() => {});
+async function pullContext() {
+  if (inWorkspace && sourceTab == null) return;
+  const result = await msg({ type: 'panel.pull', ...(inWorkspace ? { tabId: sourceTab } : {}) });
+  if (result?.error) {
+    $('log').insertAdjacentHTML('beforeend', `<div class="msg system">${esc(result.error)}</div>`);
+    return;
+  }
+  refresh();
+}
+$('pull').onclick = pullContext;
+$('chipRefresh').onclick = pullContext;
 $('chipRemove').onclick = () => msg({ type: 'panel.clearContext', id: currentId }).then(refresh);
 $('composer').onsubmit = async (e) => {
   e.preventDefault();
@@ -139,7 +213,7 @@ $('composer').onsubmit = async (e) => {
 };
 chrome.runtime.onMessage.addListener((m, _s, send) => {
   if (m && (m.type === 'panel.sync' || m.type === 'panel.pause')) refresh();
-  if (m && m.type === 'panel.clickPull') {
+  if (m && m.type === 'panel.clickPull' && !inWorkspace) {
     const b = $('pull');
     if (b) b.click();
     if (typeof send === 'function') send({ ok: true });

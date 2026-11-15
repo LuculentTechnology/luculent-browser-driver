@@ -1,6 +1,7 @@
 {
-  "name": "luculent-browser-driver",
+  "name": "@luculent/browser-driver",
   "version": "0.3.0",
+  "private": true,
   "description": "Luculent Browser Driver for AI Agents: let any AI agent drive Chrome via a local API/MCP server. Fast batched actions, no reconnects, killswitch, per-tab grants, password guard.",
   "type": "module",
   "bin": {
@@ -27,13 +28,5 @@
   "devDependencies": {
     "@playwright/mcp": "^0.0.85"
   },
-  "license": "MIT",
-  "homepage": "https://luculent.dev/beta",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/dProFoSho/luculent-browser-driver.git"
-  },
-  "bugs": {
-    "url": "https://github.com/dProFoSho/luculent-browser-driver/issues"
-  }
+  "license": "MIT"
 }

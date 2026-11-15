@@ -10,7 +10,7 @@ agent --MCP/HTTP/WS + API key--> relay (127.0.0.1:47800) --WebSocket--> extensio
 
 ## 1. Install (once)
 
-The Chrome extension itself does not use Node. Running the local relay for external HTTP and MCP clients currently requires Node 20+.
+Requires Node 20+.
 
 ```bash
 git clone https://github.com/dProFoSho/luculent-browser-driver

@@ -1,0 +1,470 @@
+/* Shared Luculent GUI controls for the Browser Driver extension.
+   Matches the live luculent.dev dashboard mock / beta product UI. */
+
+.wm {
+  font-family: var(--font-wordmark);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--paper);
+}
+.mark {
+  display: block;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.brand .titles { min-width: 0; }
+.brand .sub, .lead, .muted, small {
+  color: var(--muted);
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+button {
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 0;
+  border-radius: var(--radius-btn);
+  padding: 8px 12px;
+  min-height: 36px;
+  cursor: pointer;
+  color: var(--paper);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: background-position 0.2s, filter 0.2s, box-shadow 0.2s, color 0.2s;
+}
+button:disabled, button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary: gold radial lit from the right, never flat. Ink label. */
+.btn-gold,
+#pull,
+#composer button[type=submit],
+#chat,
+#grant.on,
+#sects button.on,
+.modes button.on,
+.ok,
+#pauseResume {
+  color: var(--ink);
+  -webkit-text-fill-color: var(--ink);
+  background: var(--gold-radial-right);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--gold-hi) 70%, transparent),
+    0 8px 22px -12px color-mix(in oklab, #FAD56C 80%, transparent);
+}
+.btn-gold:hover,
+#pull:hover,
+#composer button[type=submit]:hover,
+#chat:hover,
+#grant.on:hover,
+.ok:hover,
+#pauseResume:hover {
+  filter: brightness(1.08);
+}
+
+/* Secondary / quiet */
+.btn-quiet,
+#rc,
+#setup,
+#repair,
+#chipRefresh,
+#chipRemove,
+#grant:not(.on) {
+  color: var(--paper);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.btn-quiet:hover,
+#rc:hover,
+#setup:hover,
+#repair:hover,
+#chipRefresh:hover,
+#chipRemove:hover,
+#grant:not(.on):hover,
+#list .row button:hover {
+  box-shadow: inset 0 0 0 1px var(--line-gold);
+  color: var(--paper);
+}
+
+/* Outlined gold */
+.btn-outline {
+  color: var(--paper);
+  background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--gold-radial) border-box;
+  border: 1.5px solid transparent;
+  box-shadow: none;
+}
+.btn-outline:hover { filter: brightness(1.15); }
+
+/* Killswitch: quiet monotone control, same family as secondary buttons. No red/pink fill, no glow. */
+#kill, #kill.resume {
+  color: var(--paper);
+  -webkit-text-fill-color: var(--paper);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line);
+  filter: none;
+}
+#kill.resume {
+  background: var(--surface);
+}
+#kill:hover, #kill.resume:hover {
+  filter: none;
+  background: color-mix(in oklab, var(--paper) 7%, var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--paper) 24%, transparent);
+}
+
+/* Deny stays quiet, not gold */
+.no {
+  color: var(--paper);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.card, #plan, #chip, #pause, .pend, #bannerCard {
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--paper) 9%, transparent);
+}
+#plan, #chip {
+  border-color: var(--line-gold);
+  background:
+    linear-gradient(180deg, var(--surface-3), var(--surface)) padding-box,
+    var(--gold-radial) border-box;
+  border: 1.5px solid transparent;
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--paper);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  padding: 8px 10px;
+  min-height: 36px;
+}
+input::placeholder, textarea::placeholder { color: var(--muted); }
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  border-color: var(--ring);
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+input[type="checkbox"] {
+  accent-color: #E3BC57;
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+label { cursor: pointer; }
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7A7A80;
+  display: inline-block;
+  box-shadow: 0 0 0 3px color-mix(in oklab, currentColor 18%, transparent);
+}
+.st, #st { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+
+/* Tabs: pill rail, active is radial gold with ink label. */
+#sects, .modes {
+  display: flex;
+  gap: 4px;
+  margin: 8px 12px 0;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--ink) 22%, transparent);
+}
+#sects button, .modes button {
+  flex: 1;
+  margin: 0;
+  padding: 4px 10px;
+  min-height: 28px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+  border-radius: 9999px;
+}
+#sects button:hover, .modes button:hover { color: var(--paper); }
+#sects button.on, .modes button.on {
+  color: var(--ink);
+  -webkit-text-fill-color: var(--ink);
+  background: var(--gold-radial);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--gold-hi) 70%, transparent);
+}
+.modes { margin: 0 0 12px; }
+.modes:empty, .modes.single { display: none; }
+
+#list { max-height: 120px; overflow: auto; padding: 6px 12px; border-bottom: 1px solid var(--line-soft); }
+#list .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  margin: 4px 0;
+  border-radius: 12px;
+  border-bottom: 0;
+}
+#list .row:hover { background: color-mix(in oklab, var(--paper) 4%, transparent); }
+#list .row.on {
+  background: linear-gradient(90deg, color-mix(in oklab, #FAD56C 13%, transparent), color-mix(in oklab, var(--paper) 4%, transparent) 70%);
+  box-shadow: inset 0 0 0 1px var(--line-gold);
+}
+#list .row b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+#list .row button { padding: 3px 8px; font-size: 11px; min-height: 24px; font-weight: 500; }
+
+#plan { margin: 8px 12px 0; padding: 10px 12px; font-size: 12px; }
+#plan .head {
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  margin: 0 0 6px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+#plan .goal { color: var(--paper); text-transform: none; letter-spacing: 0; font-weight: 500; font-family: var(--font-sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#plan ol { margin: 0; padding: 0 0 0 18px; }
+#plan li { margin: 3px 0; color: var(--paper); }
+#plan li.done { color: var(--ok); }
+#plan li.current { color: var(--gold-hi); font-weight: 600; }
+#plan li.miss, #plan li.error { color: var(--danger); }
+#plan li.pending { color: var(--muted); }
+#plan .evt { margin-top: 6px; color: var(--gold-hi); font-size: 11px; }
+
+#chip { margin: 8px 12px 0; padding: 8px 10px; display: flex; align-items: center; gap: 8px; font-size: 12px; }
+#chip span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#chip button { min-height: 28px; padding: 4px 8px; font-size: 11px; }
+
+#pause, .pend {
+  margin: 8px 12px 0;
+  padding: 10px 12px;
+  border-color: color-mix(in oklab, var(--warn) 55%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--warn) 14%, var(--surface-2)), var(--surface));
+}
+#pause b, .pend b { color: var(--warn); }
+.pend { margin: 6px 0; }
+.pend .btns, #pause div { display: flex; gap: 6px; margin-top: 6px; }
+.pend button { margin-top: 0; padding: 6px 10px; }
+
+#log { flex: 1; overflow: auto; padding: 10px 12px; }
+#log .msg { margin: 0 0 12px; line-height: 1.45; }
+#log .msg .who {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+#log .msg.user {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--paper) 5%, transparent);
+}
+#log .msg.agent {
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line-gold);
+  background: color-mix(in oklab, #FAD56C 6%, transparent);
+}
+#log .msg.system { color: var(--muted); }
+#log div { border-bottom: 1px solid var(--line-soft); padding: 4px 0; }
+.denied { color: var(--danger); }
+.empty { color: var(--muted); padding: 12px; font-size: 12px; }
+
+/* Consent / onboarding surfaces (also used if a later commit adds those pages). */
+.consent, .setup-screen {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 28px 20px;
+}
+.consent-copy, .setup-screen .plea {
+  color: var(--paper);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+.consent-copy p, .setup-screen p { margin: 0 0 12px; }
+.consent-actions, .setup-screen .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.consent a.policy, .setup-screen a.policy { color: var(--gold-hi); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---------- panel ---------- */
+body.panel { height: 100%; display: flex; flex-direction: column; font-size: 13px; }
+html:has(body.panel), body.panel { height: 100%; }
+body.panel header.shell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in oklab, var(--bg) 78%, transparent);
+  backdrop-filter: blur(12px);
+}
+body.panel header.shell .brand { flex: 1; min-width: 0; }
+body.panel header.shell .id { flex: 1; min-width: 0; }
+#chatName { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#meta { color: var(--muted); font-size: 11px; font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#sessions {
+  width: calc(100% - 24px);
+  margin: 8px 12px 0;
+}
+#composer {
+  border-top: 1px solid var(--line);
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--panel);
+}
+#composer textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 44px;
+  font: 13px var(--font-sans);
+}
+#composer .row { display: flex; gap: 6px; }
+#pull { flex: 1; }
+#composer button[type=submit] { flex: 0 0 auto; min-width: 72px; }
+body.panel #kill { min-height: 32px; padding: 6px 10px; font-size: 12px; }
+
+/* ---------- popup ---------- */
+body.popup {
+  width: 320px;
+  padding: 16px;
+  font-size: 13px;
+}
+body.popup h1 { font-size: 14px; margin: 0; font-weight: 600; }
+body.popup h1 .wm { font-size: 18px; display: block; line-height: 1.1; }
+body.popup .row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; gap: 8px; }
+body.popup button { width: 100%; margin-top: 8px; }
+body.popup #kill { font-size: 15px; padding: 12px; min-height: 44px; margin-top: 12px; }
+body.popup .sec { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
+body.popup .sec h2 { font-size: 10px; color: var(--muted); margin: 0 0 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--font-mono); }
+body.popup label { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 8px 0; }
+body.popup #log { max-height: 120px; overflow: auto; font-size: 11px; line-height: 1.45; font-family: var(--font-mono); }
+body.popup .pb { margin: 14px 0 0; text-align: center; border-top: 1px solid var(--line); padding-top: 12px; font-size: 12px; color: var(--muted); }
+body.popup .pb b { font-family: var(--font-wordmark); font-weight: 600; color: var(--paper); }
+body.popup #bannerExplain { margin: 8px 0 0; color: var(--paper); line-height: 1.45; }
+body.popup .modes { width: 100%; }
+body.popup .modes button { width: auto; margin: 0; }
+
+/* ---------- options ---------- */
+body.options { font-size: 14px; }
+body.options main { max-width: 760px; margin: 0 auto; padding: 28px 24px 48px; }
+body.options header.brand { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; margin: 0 0 8px; }
+body.options header.brand .mark { width: 36px; height: 36px; border-radius: 8px; }
+body.options header.brand .wm { font-size: 28px; line-height: 1; }
+body.options h1 { font-size: 14px; margin: 2px 0 0; letter-spacing: 0; font-weight: 500; color: var(--muted); }
+body.options h2 {
+  font-size: 11px;
+  margin: 28px 0 8px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+body.options p.lead { color: var(--muted); margin: 0 0 18px; }
+body.options .card { padding: 14px 16px; }
+body.options .r {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+body.options .r:last-child { border: 0; }
+body.options .r small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+body.options textarea { width: 100%; min-height: 70px; font: 12px var(--font-mono); }
+body.options #log { max-height: 360px; overflow: auto; font: 12px var(--font-mono); }
+body.options #log div { padding: 3px 0; border-bottom: 1px solid var(--line-soft); }
+body.options #tabs label { display: flex; gap: 8px; align-items: center; padding: 4px 0; }
+body.options #saved { color: var(--ok); font-size: 12px; margin-left: 8px; }
+body.options #bannerCard { margin-top: 24px; padding: 16px; }
+body.options #bannerCard small { display: block; margin-top: 6px; color: var(--paper); line-height: 1.5; }
+body.options .foot { margin-top: 28px; color: var(--muted); }
+body.options .foot b { font-family: var(--font-wordmark); font-weight: 600; color: var(--paper); }
+#navMeta, .consent-card {
+  margin: 8px 12px 0;
+  padding: 10px 12px;
+}
+body.options #navMeta, body.options .consent-card { margin: 0; }
+.consent-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.consent-head b { display: block; font-weight: 600; }
+.consent-head small { display: block; margin-top: 2px; color: var(--muted); }
+.consent-head label { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); flex: none; }
+#navMetaBody, .consent-copy { white-space: pre-wrap; margin: 10px 0 0; color: var(--paper); font-size: 12.5px; line-height: 1.5; }
+#navMetaBody:empty { display: none; }
+#navMeta .policy, .consent-card a.policy { display: inline-block; margin-top: 8px; font-size: 12px; }
+body.panel #navMeta { font-size: 12px; }
+
+[hidden] { display: none !important; }
+
+/* T1288: "When you click in the AI's tab" + cowork status. Gold hairline, graphite, never red. */
+.click-row {
+  display: flex; align-items: center; gap: 8px;
+  margin: 8px 12px 0; padding: 6px 10px;
+  border-radius: var(--radius-input);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 12px; color: var(--muted);
+}
+.click-row label { flex: 1; min-width: 0; }
+.click-row select {
+  min-height: 28px; padding: 2px 8px; font: inherit; font-size: 12px;
+  color: var(--paper); background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: var(--radius-input);
+}
+.click-row select:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+.cowork-note {
+  display: flex; align-items: center; gap: 10px;
+  margin: 8px 12px 0; padding: 8px 10px;
+  border-radius: var(--radius-input);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line-gold);
+  font-size: 12px; color: var(--paper);
+}
+.cowork-note .dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--gold-flat); box-shadow: 0 0 0 3px color-mix(in oklab, var(--gold-flat) 16%, transparent); }
+.cowork-note .txt { flex: 1; min-width: 0; }
+.cowork-note b { font-weight: 600; display: block; }
+.cowork-note small { color: var(--muted); font-size: 11px; }
+.cowork-note .primary {
+  min-height: 28px; padding: 4px 12px; font-size: 12px; border: 0; border-radius: var(--radius-btn); cursor: pointer;
+  color: var(--ink); -webkit-text-fill-color: var(--ink); background: var(--gold-radial-right);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--gold-hi) 70%, transparent);
+}
+.cowork-note .primary:hover { filter: brightness(1.08); }

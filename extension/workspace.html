@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Luculent Browser Driver</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="workspace.css">
+</head>
+<body class="driver-workspace">
+  <header class="workspace-header">
+    <div class="workspace-lockup">
+      <img src="icons/luculent-favicon.svg" alt="" width="30" height="30">
+      <div><h1>Luculent</h1><p>Browser Driver</p></div>
+    </div>
+    <nav aria-label="Browser Driver workspace">
+      <a href="#chat" id="chatLink" aria-current="page">Chat and sessions</a>
+      <a href="#settings" id="settingsLink">Settings</a>
+    </nav>
+    <a class="workspace-account" href="https://luculent.dev/beta/account" target="_blank" rel="noopener noreferrer">Account</a>
+  </header>
+  <main class="workspace-surface" aria-label="Workspace">
+    <iframe id="chatFrame" title="Agent chat and sessions" src="about:blank"></iframe>
+    <iframe id="settingsFrame" title="Browser Driver settings" src="about:blank" hidden></iframe>
+  </main>
+  <script type="module" src="workspace.js"></script>
+</body>
+</html>

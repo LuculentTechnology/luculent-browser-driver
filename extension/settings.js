@@ -13,16 +13,36 @@ export const BANKING_PRESET = [
 export const DEFAULTS = {
   readOnly: false, passwords: 'deny', eval: 'deny', cookies: 'deny', storage: 'deny', downloads: 'allow', uploads: 'confirm',
   submitSensitive: 'confirm', internalPages: 'deny', fileUrls: 'deny', rawCdp: 'deny', headless: 'allow',
-  grantMode: 'granted', incognito: false, bankingPreset: true, blocklist: [], allowlist: [],
+  grantMode: 'granted', approveAccessMode: false, incognito: false, bankingPreset: true, blocklist: [], allowlist: [],
   rateLimit: { perSecond: 20, perMinute: 600 }, confirmTimeoutSec: 60, audit: true,
+  aiCursor: true, disableWindow: false, clickMode: 'cowork',
+  pingWhenDone: false, pingSound: 'chime',
 };
+
+// "When you click in the AI's tab" (T1288). Mirrors src/cowork.mjs.
+export const CLICK_MODES = ['cowork', 'pause', 'disable'];
+export const CLICK_MODE_LABELS = { cowork: 'Cowork', pause: 'Pause', disable: 'Disable window' };
+export function normalizeClickMode(mode, legacy = {}) {
+  const m = String(mode == null ? '' : mode).toLowerCase().replace(/[\s_-]+/g, '');
+  if (m === 'cowork' || m === 'coworking') return 'cowork';
+  if (m === 'pause') return 'pause';
+  if (m === 'disable' || m === 'disablewindow' || m === 'block' || m === 'lock') return 'disable';
+  if (legacy && legacy.disableWindow === true) return 'disable';
+  return 'cowork';
+}
 const CAPS = ['passwords', 'eval', 'cookies', 'storage', 'downloads', 'uploads', 'submitSensitive', 'internalPages', 'fileUrls', 'rawCdp', 'headless'];
 const LEVELS = ['allow', 'confirm', 'deny'];
+const PING_SOUNDS = ['chime', 'bell', 'marimba', 'droplet', 'bowl'];
 
 export function normalize(p = {}) {
   const o = { ...DEFAULTS, ...p };
   for (const c of CAPS) if (!LEVELS.includes(o[c])) o[c] = DEFAULTS[c];
-  o.readOnly = !!o.readOnly; o.incognito = !!o.incognito; o.bankingPreset = !!o.bankingPreset;
+  o.readOnly = !!o.readOnly; o.approveAccessMode = !!o.approveAccessMode; o.incognito = !!o.incognito; o.bankingPreset = !!o.bankingPreset;
+  o.aiCursor = o.aiCursor !== false;
+  o.pingWhenDone = !!o.pingWhenDone;
+  o.pingSound = PING_SOUNDS.includes(o.pingSound) ? o.pingSound : 'chime';
+  o.clickMode = normalizeClickMode(p.clickMode, { disableWindow: p.disableWindow === true });
+  o.disableWindow = o.clickMode === 'disable';
   o.grantMode = o.grantMode === 'all' ? 'all' : 'granted';
   o.blocklist = [].concat(o.blocklist || []).map(String).map((x) => x.trim()).filter(Boolean);
   o.allowlist = [].concat(o.allowlist || []).map(String).map((x) => x.trim()).filter(Boolean);
@@ -49,9 +69,11 @@ export async function saveSettings(patch) {
 
 export function hostMatch(pattern, host) {
   if (!pattern || !host) return false;
+  const canon = (h) => String(h).replace(/\.+$/, '').toLowerCase();
+  host = canon(host);
   if (pattern === '*') return true;
   if (pattern.length > 2 && pattern.startsWith('/') && pattern.endsWith('/')) { try { return new RegExp(pattern.slice(1, -1), 'i').test(host); } catch (_) { return false; } }
-  const p = pattern.replace(/^\*\./, '').toLowerCase();
+  const p = canon(pattern.replace(/^\*\./, ''));
   return host === p || host.endsWith('.' + p);
 }
 
@@ -59,7 +81,7 @@ export function hostMatch(pattern, host) {
 export function isChromeWebStore(url) {
   try {
     const u = new URL(url);
-    const host = u.hostname.toLowerCase();
+    const host = u.hostname.replace(/\.+$/, '').toLowerCase();
     const path = u.pathname.toLowerCase();
     if (host === 'chromewebstore.google.com' || host.endsWith('.chromewebstore.google.com')) return true;
     if ((host === 'chrome.google.com' || host === 'www.chrome.google.com') && (path === '/webstore' || path.startsWith('/webstore/'))) return true;
@@ -75,7 +97,7 @@ export function urlBlocked(s, url) {
   if (INTERNAL.test(url)) return s.internalPages === 'allow' && !url.startsWith('chrome-extension://' + chrome.runtime.id) ? null : 'browser-internal and extension pages are off limits';
   if (isChromeWebStore(url)) return 'Chrome Web Store pages are blocked by your security settings';
   if (u.protocol === 'file:') return s.fileUrls === 'allow' ? null : 'file:// URLs are blocked';
-  const host = u.hostname.toLowerCase();
+  const host = u.hostname.replace(/\.+$/, '').toLowerCase();
   if (s.bankingPreset && BANKING_PRESET.some((p) => hostMatch(p, host))) return `${host} is on the banking/payment blocklist`;
   if (s.blocklist.some((p) => hostMatch(p, host))) return `${host} is on your blocklist`;
   if (s.allowlist.length && !s.allowlist.some((p) => hostMatch(p, host))) return `${host} is not on your allowlist`;

@@ -135,3 +135,53 @@ test('two Chrome profiles stay connected; listProfiles returns both; one disconn
   assert.equal(router.listProfiles()[0].profileId, 'personal');
   assert.equal(router.ext, b);
 });
+
+test('killswitch detaches every connected Chrome profile, not just the primary', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'lbd-kill-'));
+  const keys = new KeyStore(home);
+  const relay = await new Relay({ port: 0, keys, log: () => {} }).start();
+  try {
+    const sent = [];
+    const mk = (profileId) => ({
+      readyState: 1,
+      sent: [],
+      send(raw) {
+        const msg = JSON.parse(raw);
+        this.sent.push(msg);
+        sent.push({ profileId, type: msg.type });
+        queueMicrotask(() => relay.router.onExtMessage({ id: msg.id, result: { ok: true } }));
+      },
+      close() { this.readyState = 3; },
+    });
+    const work = mk('work');
+    const personal = mk('personal');
+    relay.router.attachExtension(work, { id: 'ext-a', profileId: 'work', profileName: 'Work' });
+    relay.router.attachExtension(personal, { id: 'ext-b', profileId: 'personal', profileName: 'Personal' });
+    const r = await relay.kill('test');
+    assert.equal(r.killed, true);
+    const detached = sent.filter((x) => x.type === 'detachAll').map((x) => x.profileId).sort();
+    assert.deepEqual(detached, ['personal', 'work']);
+    await relay.resume();
+  } finally { await relay.stop(); }
+});
+
+test('regional default navMeta on connect does not overwrite a saved user consent choice', async () => {
+  const { relay, home } = await boot();
+  try {
+    relay.meta.setConsent({ consented: false, setByUser: true });
+    assert.equal(relay.meta.status().consented, false);
+    assert.equal(relay.meta.status().setByUser, true);
+    const after = relay.applyNavMeta({ consented: true, setByUser: false, region: 'other', defaultOn: true });
+    assert.equal(after.consented, false);
+    assert.equal(after.setByUser, true);
+    const { existsSync, readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const saved = JSON.parse(readFileSync(join(home, 'nav-meta-consent.json'), 'utf8'));
+    assert.equal(saved.consented, false);
+    assert.equal(saved.setByUser, true);
+    // A real user choice from the extension still applies and is persisted.
+    const user = relay.applyNavMeta({ consented: true, setByUser: true });
+    assert.equal(user.consented, true);
+    assert.equal(user.setByUser, true);
+  } finally { await relay.stop(); }
+});

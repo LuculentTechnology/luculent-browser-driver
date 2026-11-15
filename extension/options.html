@@ -1,29 +1,38 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>Security settings - Luculent Browser Driver for AI Agents</title><style>
-body{font:14px system-ui,sans-serif;margin:0;background:#0b0b0f;color:#e5e7eb}
-main{max-width:760px;margin:0 auto;padding:24px}
-h1{font-size:20px;margin:0 0 4px} h2{font-size:15px;margin:22px 0 8px;color:#c7d2fe}
-p.lead{color:#9ca3af;margin:0 0 14px}
-.card{background:#111118;border:1px solid #27272a;border-radius:12px;padding:14px 16px}
-.r{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:8px 0;border-bottom:1px solid #1f1f27}.r:last-child{border:0}
-.r small{display:block;color:#9ca3af;font-size:12px;margin-top:2px}
-select,input[type=number],input[type=text],textarea{background:#18181b;color:#e5e7eb;border:1px solid #3f3f46;border-radius:6px;padding:6px}
-textarea{width:100%;box-sizing:border-box;min-height:70px;font:12px ui-monospace,monospace}
-button{padding:8px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:600;background:#27272a;color:#e5e7eb}
-#kill{background:#dc2626;color:#fff} #kill.resume{background:#16a34a}
-#log{max-height:360px;overflow:auto;font:12px ui-monospace,monospace} #log div{padding:3px 0;border-bottom:1px solid #18181b} .denied{color:#fca5a5}
-#tabs label{display:flex;gap:8px;align-items:center;padding:4px 0} a{color:#a5b4fc}
-#saved{color:#86efac;font-size:12px;margin-left:8px}
-</style></head><body><main>
-<h1>Luculent Browser Driver for AI Agents</h1>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Security settings - Luculent Browser Driver for AI Agents</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="ui.css">
+</head>
+<body class="options">
+<main>
+<header class="brand">
+  <img class="mark" src="icons/luculent-favicon.svg" width="28" height="28" alt="">
+  <div class="titles">
+    <div class="wm">Luculent</div>
+    <h1>Browser Driver for AI Agents</h1>
+  </div>
+</header>
 <p class="lead">Decide what connected AI agents may do in this browser. Changes save instantly and apply to every agent and API key. <span id="saved"></span></p>
 <div class="card"><div class="r"><div><b>Killswitch</b><small>Stops every agent, detaches every tab and refuses all commands until you resume. Shortcut: Alt+Shift+K.</small></div><button id="kill">Stop all agents</button></div></div>
 
 <h2>Which tabs</h2>
 <div class="card">
 <div class="r"><div>Agents can use<small>"Granted tabs" means only tabs you allow below or in the popup, plus tabs the agent opens itself.</small></div><select data-k="grantMode"><option value="granted">Granted tabs only (recommended)</option><option value="all">Every tab</option></select></div>
+<div class="r"><div>Approve access mode<small>Off by default. When on, show a badge on the extension icon when an AI agent wants to connect so you can approve once, for 24 hours, or always.</small></div><input type="checkbox" data-k="approveAccessMode"></div>
 <div class="r"><div>Incognito tabs<small>Off by default. Chrome also requires "Allow in Incognito" on the extension.</small></div><input type="checkbox" data-k="incognito"></div>
 <div id="tabs"></div>
+</div>
+
+<h2>While an agent is working</h2>
+<div class="card">
+<div class="r"><div>AI cursor<small>Show a separate Luculent cursor that moves to the target before a click or typing. It does not replace or intercept your mouse.</small></div><input type="checkbox" data-k="aiCursor"></div>
+<div class="r"><div>When you click in the AI's tab<small>Cowork: the AI waits while you help, then continues from where you left the page. Pause: your click pauses the task until you press Resume. Disable window: your mouse and keyboard are blocked in that tab while the AI works, with a "Take back control" button. The killswitch always works.</small></div><select data-k="clickMode" id="clickMode" aria-label="When you click in the AI's tab"><option value="cowork">Cowork</option><option value="pause">Pause</option><option value="disable">Disable window</option></select></div>
+<div class="r"><div>Ping when done<small>Play a peaceful ping sound when an AI agent finishes driving.</small></div><input type="checkbox" data-k="pingWhenDone"></div>
+<div class="r"><div>Ping sound<small>Choose one of 5 peaceful ping sounds.</small></div><div style="display:flex;gap:8px;align-items:center"><select data-k="pingSound" id="pingSound" aria-label="Ping sound"><option value="chime">Soft Chime</option><option value="bell">Glass Bell</option><option value="marimba">Warm Marimba</option><option value="droplet">Water Droplet</option><option value="bowl">Singing Bowl</option></select><button type="button" id="testPing">Preview</button></div></div>
 </div>
 
 <h2>What agents may do</h2>
@@ -65,12 +74,34 @@ button{padding:8px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:60
 <div class="r"><div>Relay address<small>Default ws://127.0.0.1:47800/ext</small></div><input type="text" id="url" placeholder="ws://127.0.0.1:47800/ext" size="28"></div>
 <div class="r"><div>Relay pairing<small>The extension remembers the first relay it connects to and refuses any other program on that port. Re-pair only after reinstalling the relay.</small></div><button id="repair">Re-pair relay</button></div>
 </div>
-<p style="margin-top:24px;color:#9ca3af">Built by <a href="https://luculent.dev/beta?utm_source=browser-driver&utm_medium=options" target="_blank" rel="noopener">Luculent</a>. Join the beta.</p>
-</main><script type="module" src="options.js"></script>
-<div class="card" id="bannerCard" style="margin-top:16px">
+
+
+<h2>Navigation metadata</h2>
+<div class="card consent-card" id="navMeta">
+  <div class="consent-head">
+    <div>
+      <b id="navMetaTitle">Help the driver get much faster over time</b>
+      <small id="navMetaCaption"></small>
+    </div>
+    <label>Share navigation metadata <input type="checkbox" id="navMetaOn"></label>
+  </div>
+  <p id="navMetaBody" class="consent-copy"></p>
+  <p><a id="navMetaPrivacy" class="policy" href="https://privacy.luculent.dev/policy" target="_blank" rel="noopener">Privacy policy</a></p>
+</div>
+<div class="card" id="bannerCard">
   <div><b>What is this banner?</b>
   <small id="bannerExplain">Chrome sometimes shows a bar that says this extension "is debugging this browser." Chrome shows that bar for any extension that can control a window. It cannot be hidden. It only means an AI agent is allowed to control that window — not that your computer is being hacked, and not that anything is being sent off your machine. To stop it, press the killswitch in the popup (or Alt+Shift+K), or click Cancel on the banner.</small></div>
 </div>
+
+<div class="card" id="accountCard">
+  <div class="r"><div><b>Luculent account</b><small>Sign in to sync security controls, blocked domains, and panel preferences across browsers. API keys, secrets and chats stay on this device. Signed-out use keeps working locally.</small></div>
+  <button type="button" id="accountSignIn">Sign in to sync</button></div>
+  <p id="accountStatus"><small>Not signed in. Settings stay on this browser.</small></p>
+  <button type="button" id="accountSignOut" hidden>Sign out of sync</button>
+</div>
+<p class="foot">Built by <a href="https://luculent.dev/beta?utm_source=browser-driver&utm_medium=options" target="_blank" rel="noopener"><b>Luculent</b></a>. Join the beta.</p>
+</main>
+<script type="module" src="options.js"></script>
 <script type="module">
   import { BANNER_TEXT } from './banner.js';
   document.getElementById('bannerExplain').textContent = BANNER_TEXT;

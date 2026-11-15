@@ -1,4 +1,4 @@
-// Side-panel chat harness: identify the driving agent and exchange messages.
+// Side-panel chat harness: identify the driving agent and exchange messages (LUC-3083, LUC-3084).
 // Identity: explicit identify tool, else MCP clientInfo, else client name + API key label.
 import { ChatStore, displayName, redactSecrets } from './chats.mjs';
 import { sanitizePageContext, pageContextMessage, pageContextChip, PAGE_CONTEXT_INSTRUCTION } from './page-context.mjs';

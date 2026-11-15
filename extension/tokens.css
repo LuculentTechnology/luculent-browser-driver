@@ -1,0 +1,111 @@
+/* Vendored tokens from the live luculent.dev GUI (SOP-099).
+   Source of truth: site/app/(beta)/beta.css and site/app/(beta)/dashboard-mock.css
+   in dProFoSho/luculent. Values are copied from those files, not invented.
+   The extension is dark-only. Fonts are bundled; do not fetch CSS or fonts from the network (MV3). */
+
+@font-face {
+  font-family: "Luculent Sans v2";
+  src: url("fonts/LuculentSansV2-Variable.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Luculent Sans Mono v2";
+  src: url("fonts/LuculentSansMonoV2-Variable.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Luculent Sans v2 Wordmark";
+  src: url("fonts/LuculentSansV2Wordmark-SemiBold-v2002.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --ink: #030306;
+  --graphite: #28282D;
+  --paper: #FBFBFC;
+  --gold-flat: #E3BC57;
+  --gold-expo: #FFE27A;
+  --gold-hi: #FFE7A0;
+  /* Mark 25-stop radial, light from the NE. Copied from beta.css. */
+  --gold-stops: #FAD56C 0%, #FAD56C 4.2%, #FBD66C 8.3%, #FBD66C 12.5%, #FBD66B 16.7%, #FAD46A 20.8%, #F7D167 25%,
+    #F2CC63 29.2%, #EBC45D 33.3%, #E3BC57 37.5%, #DBB451 41.7%, #D3AB4A 45.8%, #CCA445 50%, #C69E40 54.2%,
+    #C0973C 58.3%, #BB9238 62.5%, #B68C34 66.7%, #B18730 70.8%, #AD832D 75%, #A97F2A 79.2%, #A57C27 83.3%,
+    #A27925 87.5%, #9F7723 91.7%, #9D7521 95.8%, #9B7320 100%;
+  --gold-radial: radial-gradient(ellipse 98% 98% at 88% 12%, var(--gold-stops));
+  /* Compact controls: radial gold lit from the right (dashboard-mock send control). */
+  --gold-radial-right: radial-gradient(ellipse 125% 170% at 100% 0%, var(--gold-stops));
+  --gold-sweep: linear-gradient(120deg, #FFE7A0 0%, #FAD56C 25%, #E3BC57 50%, #F2CC63 55% 100%) 98% 0 / 250% 100%;
+
+  --bg: color-mix(in oklab, var(--graphite) 62%, var(--ink));
+  --bg-deep: color-mix(in oklab, var(--graphite) 38%, var(--ink));
+  --panel: color-mix(in oklab, var(--graphite) 72%, var(--ink));
+  --surface: var(--graphite);
+  --surface-2: color-mix(in oklab, var(--graphite) 90%, var(--paper));
+  --surface-3: color-mix(in oklab, var(--graphite) 82%, var(--paper));
+  --line: color-mix(in oklab, var(--paper) 13%, transparent);
+  --line-soft: color-mix(in oklab, var(--paper) 7%, transparent);
+  --line-gold: color-mix(in oklab, var(--gold-flat) 38%, transparent);
+  --muted: color-mix(in oklab, var(--paper) 78%, var(--graphite));
+
+  --ok: #4ADE80;
+  --warn: #FF8F5A;
+  --info: #6CB0FF;
+  --danger: #FF5C7A;
+
+  --font-sans: "Luculent Sans v2", "Luculent Sans", Geist, Inter, system-ui, sans-serif;
+  --font-mono: "Luculent Sans Mono v2", "Luculent Sans Mono", "Geist Mono", ui-monospace, monospace;
+  --font-wordmark: "Luculent Sans v2 Wordmark", "Luculent Sans v2", sans-serif;
+
+  --radius-input: 6px;
+  --radius-btn: 8px;
+  --radius-card: 16px;
+  --ring: var(--gold-expo);
+
+  --background: var(--bg);
+  --foreground: var(--paper);
+  --card: var(--surface);
+  --border: var(--line);
+  --primary: var(--gold-flat);
+  --primary-foreground: var(--ink);
+}
+
+html { color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background:
+    radial-gradient(1200px 700px at 50% -120px, color-mix(in oklab, #FAD56C 16%, transparent), transparent 70%),
+    var(--bg);
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--gold-hi); text-decoration: none; }
+a:hover { color: var(--gold-expo); }
+::selection { background: color-mix(in oklab, var(--gold-flat) 40%, transparent); color: var(--paper); }
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) { outline: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

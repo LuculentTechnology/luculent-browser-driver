@@ -10,6 +10,12 @@ test('recorded steps redact secrets and password fields', () => {
   assert.equal(s.text, '[redacted]');
   const s2 = sanitizeStep({ action: 'type', target: 'email', text: 'password=hunter2' });
   assert.doesNotMatch(s2.text, /hunter2/);
+  const ref = sanitizeStep({ action: 'type', target: 'e7', text: 'hunter2', isPassword: true });
+  assert.equal(ref.text, '[redacted]');
+  const typed = sanitizeStep({ action: 'fill', target: 'e1', text: 'hunter2', inputType: 'password' });
+  assert.equal(typed.text, '[redacted]');
+  const plain = sanitizeStep({ action: 'fill', target: 'e1', text: 'Ada' });
+  assert.equal(plain.text, 'Ada');
 });
 
 test('record and replay a flow with no model calls; failure returns needsModel', async () => {

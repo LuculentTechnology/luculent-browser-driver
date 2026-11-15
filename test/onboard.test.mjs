@@ -88,3 +88,10 @@ test('hooks start the relay and install the logon task; dry-run does not', async
   assert.equal(r.task.name, 'Luculent Browser Driver Relay');
 });
 
+test('mergeJsonMcp refuses to overwrite a config file that did not parse', () => {
+  const dir = tmp();
+  const file = join(dir, 'mcp.json');
+  writeFileSync(file, '{ not valid json');
+  assert.throws(() => mergeJsonMcp(file, 'luculent-browser-driver', { command: 'node' }), /did not parse/);
+  assert.equal(readFileSync(file, 'utf8'), '{ not valid json');
+});

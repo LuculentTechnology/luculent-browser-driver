@@ -1,4 +1,4 @@
-// Pull page context for the side-panel chat.
+// Pull page context for the side-panel chat (LUC-3085).
 // Extracted from the active tab, sanitized, size-capped, and attached to a chat so follow-ups carry it.
 import { redactSecrets } from './chats.mjs';
 

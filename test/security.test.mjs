@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Relay } from '../src/relay.mjs';
 import { KeyStore } from '../src/keys.mjs';
-import { DEFAULT_POLICY, urlBlocked, effective, normalize, isChromeWebStore } from '../src/policy.mjs';
+import { DEFAULT_POLICY, urlBlocked, effective, normalize, isChromeWebStore, hostMatch, hasUrlScheme } from '../src/policy.mjs';
 import { startBroadFixtures } from './fixtures-broad.mjs';
 
 let relay, keys, fx, home, tab, admin;
@@ -96,6 +96,10 @@ test('banking/payment preset blocks by default and can be turned off; blocklist 
   await resetPolicy();
   for (const url of ['https://www.chase.com/', 'https://dashboard.stripe.com/', 'https://www.paypal.com/', 'https://online.mybankcorp.com/']) assert.equal((await full('navigate', { tab, url })).status, 403, url);
   assert.equal(urlBlocked(normalize({ bankingPreset: false }), 'https://www.chase.com/'), null);
+  assert.match(urlBlocked(normalize({}), 'https://www.chase.com./') || '', /banking\/payment blocklist/i);
+  assert.equal(hostMatch('chase.com', 'www.chase.com.'), true);
+  assert.equal(hostMatch('chase.com.', 'www.chase.com'), true);
+  assert.equal(isChromeWebStore('https://chromewebstore.google.com./detail/foo'), true);
   await setPolicy({ blocklist: ['127.0.0.1'] });
   assert.equal((await full('navigate', { tab, url: fx.a + '/item/x' })).status, 403);
   await setPolicy({ blocklist: [], allowlist: ['example.org'] });
@@ -241,4 +245,56 @@ test('DNS-rebinding guard: foreign Host header is refused', async () => {
   const status = await new Promise((res, rej) => { const q = request({ host: '127.0.0.1', port: relay.port, path: '/v1/rpc', method: 'POST', headers: { host: 'evil.example', 'x-lbd-admin': keys.adminToken(), 'content-type': 'application/json' } }, (r) => { r.resume(); res(r.statusCode); }); q.on('error', rej); q.end('{"method":"status"}'); });
   const r = { status };
   assert.equal(r.status, 403);
+});
+test('blob: URLs inherit the origin host for blocklist, allowlist, and banking rules', () => {
+  const p = normalize({});
+  assert.match(urlBlocked(p, 'blob:https://www.chase.com/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee') || '', /banking\/payment blocklist/i);
+  assert.equal(urlBlocked(normalize({ bankingPreset: false }), 'blob:https://www.chase.com/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'), null);
+  const blocked = normalize({ bankingPreset: false, blocklist: ['example.org'] });
+  assert.match(urlBlocked(blocked, 'blob:https://example.org/abc') || '', /blocklist/i);
+  const allowed = normalize({ bankingPreset: false, allowlist: ['example.org'] });
+  assert.match(urlBlocked(allowed, 'blob:https://other.example/abc') || '', /allowlist/i);
+  assert.equal(urlBlocked(allowed, 'blob:https://example.org/abc'), null);
+  assert.equal(urlBlocked(p, 'blob:null/foo'), null);
+  assert.equal(urlBlocked(p, 'data:text/html,hi'), null);
+});
+
+test('hasUrlScheme distinguishes real schemes from host:port', () => {
+  assert.equal(hasUrlScheme('https://example.com'), true);
+  assert.equal(hasUrlScheme('http://localhost:3000'), true);
+  assert.equal(hasUrlScheme('mailto:a@b.com'), true);
+  assert.equal(hasUrlScheme('localhost:3000'), false);
+  assert.equal(hasUrlScheme('example.com:8080'), false);
+  assert.equal(hasUrlScheme('example.com'), false);
+});
+
+test('disjoint allowlists in combination block every host', async () => {
+  const { strictest } = await import('../src/relay.mjs');
+  const e = strictest(normalize({ allowlist: ['a.example'] }), normalize({ allowlist: ['b.example'] }));
+  assert.equal(e.allowlistRequired, true);
+  assert.equal(e.allowlist.length, 0);
+  assert.match(urlBlocked(e, 'https://a.example/') || '', /allowlist/i);
+  assert.match(urlBlocked(e, 'https://b.example/') || '', /allowlist/i);
+});
+
+test('tabs.new and runParallel cannot launch headless Chrome without the headless scope or when policy denies it', async () => {
+  const k = asKey(keys.mint({ name: 'tabs-only', scopes: ['read', 'act', 'tabs'] }).token);
+  assert.equal((await k('tabs.new', { url: 'about:blank' })).status, 403);
+  assert.equal((await k('tabs.new', { source: 'headless' })).status, 403);
+  const par = await k('runParallel', { jobs: [{ newTab: true, source: 'headless', steps: [{ action: 'extract', target: 'body' }] }] });
+  const res = par.json.result || par.json;
+  assert.equal(res.ok, false);
+  assert.match(JSON.stringify(res), /headless/i);
+  await setPolicy({ headless: 'deny' });
+  assert.equal((await full('tabs.new', { source: 'headless' })).status, 403);
+  await resetPolicy();
+});
+
+test('tabs.new treats host:port as a host, not a scheme, and still applies banking and blocklist rules', async () => {
+  await resetPolicy();
+  assert.equal((await full('tabs.new', { source: 'headless', url: 'www.chase.com:443' })).status, 403);
+  assert.equal((await full('tabs.new', { source: 'headless', url: 'https://www.chase.com/' })).status, 403);
+  await setPolicy({ bankingPreset: false, blocklist: ['example.org'] });
+  assert.equal((await full('tabs.new', { source: 'headless', url: 'example.org:8080' })).status, 403);
+  await resetPolicy();
 });

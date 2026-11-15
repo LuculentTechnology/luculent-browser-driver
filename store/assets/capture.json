@@ -1,7 +1,7 @@
 {
-  "date": "2026-11-14T08:11:21.065Z",
-  "flowMs": 229,
-  "submitMs": 126,
+  "date": "2026-11-14T16:10:00.074Z",
+  "flowMs": 257,
+  "submitMs": 145,
   "snapshotBytes": 297,
   "summary": "name=Ada Lovelace;email=ada@example.com;plan=pro;tos=on"
 }

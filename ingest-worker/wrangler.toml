@@ -1,0 +1,9 @@
+# Scaffold only. Do not run wrangler deploy. Do not create resources.
+name = "lbd-nav-meta-ingest"
+main = "src/index.js"
+compatibility_date = "2026-11-14"
+
+# [[r2_buckets]]
+# binding = "NAV_META"
+# bucket_name = "lbd-nav-meta"
+# This binding is intentionally commented out so a deploy cannot be completed by accident.

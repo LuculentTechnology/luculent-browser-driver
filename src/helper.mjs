@@ -1,9 +1,24 @@
 // In-page helper injected with Runtime.evaluate. Idempotent: installs window.__lbd once per document.
 // Kept dependency-free and ES2020 so it runs in any Chromium page.
-export const HELPER_VERSION = 10;
+export const HELPER_VERSION = 12;
 
 export const HELPER_SRC = String.raw`(() => {
-  if (window.__lbd && window.__lbd.v === ${6}) return window.__lbd;
+  if (window.__lbd && window.__lbd.v === ${HELPER_VERSION}) return window.__lbd;
+  if (!window.__lbdDiag) {
+    const diag = { console: [], errors: [], push(arr, item) { arr.push(item); if (arr.length > 100) arr.shift(); } };
+    window.__lbdDiag = diag;
+    addEventListener('error', (e) => { diag.push(diag.errors, { type: 'error', message: String(e.message || ''), filename: String(e.filename || '').slice(-80), lineno: e.lineno || 0, at: Date.now() }); });
+    addEventListener('unhandledrejection', (e) => { diag.push(diag.errors, { type: 'unhandledrejection', message: String((e.reason && (e.reason.message || e.reason)) || 'Promise rejected'), at: Date.now() }); });
+    for (const lvl of ['error', 'warn']) {
+      const orig = console[lvl];
+      if (typeof orig === 'function') {
+        console[lvl] = function(...args) {
+          try { diag.push(diag.console, { level: lvl, text: args.map((x) => (typeof x === 'string' ? x : (x && x.message) || JSON.stringify(x))).join(' ').slice(0, 400), at: Date.now() }); } catch (_) {}
+          return orig.apply(this, args);
+        };
+      }
+    }
+  }
   let seq = 0;
   const refMap = new Map();
   const elRef = new WeakMap();
@@ -77,17 +92,36 @@ export const HELPER_SRC = String.raw`(() => {
     if (t && typeof t === 'object') return t;
     const s = String(t == null ? '' : t).trim();
     if (/^e\d+$/.test(s)) return { ref: s };
-    { const m = /^(?:\[|@|ref:\s*)(e\d+)\]?$/.exec(s); if (m) return { ref: m[1] }; } // models often copy "[e12]" from snapshots
-    if (s.startsWith('ref=')) return { ref: s.slice(4) };
-    if (s.startsWith('text=')) { const v = s.slice(5); const q = /^"(.*)"$/.exec(v); return q ? { text: q[1], exact: true } : { text: v }; }
-    if (s.startsWith('css=')) return { css: s.slice(4) };
-    if (s.startsWith('xpath=')) return { xpath: s.slice(6) };
-    if (s.startsWith('label=')) return { label: s.slice(6) };
-    if (s.startsWith('role=')) {
-      const m = /^role=([a-z]+)(?:\[name=(?:"([^"]*)"|'([^']*)'|([^\]]*))\])?$/i.exec(s);
-      if (m) return { role: m[1], name: m[2] ?? m[3] ?? m[4] };
+    { const m = /^(?:\[|@|ref:\s*|\(ref[:=]\s*|ref\s+)(e\d+)[\])]?$/i.exec(s); if (m) return { ref: m[1].toLowerCase() }; } // models often copy "[e12]", "(ref: e12)", "ref e12"
+    if (s.startsWith('ref=')) return { ref: s.slice(4).trim() };
+    if (/^text=/i.test(s)) { const v = s.slice(5).trim(); const q = /^["'](.*)["']$/.exec(v); return q ? { text: q[1], exact: true } : { text: v }; }
+    if (/^(?:css|selector)=/i.test(s)) return { css: s.replace(/^(?:css|selector)=/i, '').trim() };
+    if (/^xpath=/i.test(s)) return { xpath: s.slice(6).trim() };
+    if (/^(?:label|aria-label)=/i.test(s)) return { label: s.replace(/^(?:label|aria-label)=/i, '').trim().replace(/^["']|["']$/g, '') };
+    if (/^placeholder=/i.test(s)) return { placeholder: s.slice(12).trim().replace(/^["']|["']$/g, '') };
+    if (/^(?:testid|data-testid)=/i.test(s)) {
+      const v = s.replace(/^(?:testid|data-testid)=/i, '').trim().replace(/^["']|["']$/g, '');
+      return { css: '[data-testid="' + (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(v) : v.replace(/["\\]/g, '\\$&')) + '"]' };
     }
-    try { document.querySelector(s); return { css: s }; } catch (_) { return { text: s }; }
+    if (/^name=/i.test(s)) {
+      const v = s.slice(5).trim().replace(/^["']|["']$/g, '');
+      return { css: '[name="' + (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(v) : v.replace(/["\\]/g, '\\$&')) + '"]' };
+    }
+    if (/^id=/i.test(s)) {
+      const v = s.slice(3).trim().replace(/^["'#]|["']$/g, '');
+      return { css: '#' + (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(v) : v.replace(/["\\]/g, '\\$&')) };
+    }
+    if (/^role=/i.test(s)) {
+      const m = /^role=([a-z]+)(?:\[(?:name=)?(?:"([^"]*)"|'([^']*)'|([^\]]*))\])?$/i.exec(s);
+      if (m) return { role: m[1].toLowerCase(), name: m[2] ?? m[3] ?? m[4] };
+    }
+    // Natural-language role+name shorthand: e.g. 'button "Sign in"', "link 'Docs'", 'tab "Testing"'
+    {
+      const m = /^(button|link|tab|menuitem|checkbox|radio|switch|option|combobox|textbox|searchbox|heading)\s+(?:"([^"]+)"|'([^']+)'|\[name=(?:"([^"]+)"|'([^']+)'|([^\]]+))\])\s*$/i.exec(s);
+      if (m) return { role: m[1].toLowerCase(), name: m[2] ?? m[3] ?? m[4] ?? m[5] ?? m[6] };
+    }
+    if (/^\/\//.test(s) || /^\(\/\//.test(s)) return { xpath: s };
+    try { document.querySelector(s); return { css: s }; } catch (_) { return { text: s.replace(/^["']|["']$/g, '') }; }
   };
   const desc = (t) => JSON.stringify(t);
   const match = (hay, needle, exact) => {
@@ -130,6 +164,7 @@ export const HELPER_SRC = String.raw`(() => {
     if (t.ref) { const w = refMap.get(t.ref); const el = w && w.deref(); return el && el.isConnected ? [el] : []; }
     if (t.css) return deepAll(t.css);
     if (t.xpath) { const r = document.evaluate(t.xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null); const a = []; for (let i = 0; i < r.snapshotLength; i++) a.push(r.snapshotItem(i)); return a; }
+    if (t.placeholder) return deepAll('input,textarea,[placeholder]').filter((el) => match(el.getAttribute('placeholder') || '', t.placeholder, !!t.exact));
     if (t.label) return deepAll('input,select,textarea,[role=textbox],[role=combobox],[role=searchbox],[role=spinbutton],[role=checkbox],[role=radio],[role=switch],[role=slider],[contenteditable=\"\"],[contenteditable=true]').filter((el) => match(name(el), t.label, !!t.exact));
     if (t.role) return deepAll('*').filter((el) => role(el) === t.role && (t.name == null || match(name(el), t.name, !!t.exact)));
     if (t.text != null) { const el = byText(t.text, !!t.exact); return el ? [el] : []; }
@@ -209,29 +244,62 @@ export const HELPER_SRC = String.raw`(() => {
     return i;
   };
   const setNative = (el, prop, v) => {
-    const proto = Object.getPrototypeOf(el);
-    const d = Object.getOwnPropertyDescriptor(proto, prop);
+    let cur = Object.getPrototypeOf(el);
+    let d = null;
+    while (cur && !d) {
+      d = Object.getOwnPropertyDescriptor(cur, prop);
+      cur = Object.getPrototypeOf(cur);
+    }
+    const prev = el[prop];
     if (d && d.set) d.set.call(el, v); else el[prop] = v;
+    if (el._valueTracker && typeof el._valueTracker.setValue === 'function') {
+      try { el._valueTracker.setValue(prev); } catch (_) {}
+    }
   };
   const fill = async (target, value, timeout = 5000) => {
     const i = await waitFor(target, timeout, 'attached');
     const el = refMap.get(i.ref).deref();
     el.focus();
+    if (el.isContentEditable && !('value' in el)) {
+      el.textContent = String(value ?? '');
+      el.dispatchEvent(new InputEvent('input', { bubbles: true, data: String(value ?? ''), inputType: 'insertText' }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return i;
+    }
     setNative(el, 'value', value);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new InputEvent('input', { bubbles: true, data: String(value ?? ''), inputType: 'insertText' }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
     return i;
   };
   const select = async (target, values, timeout = 5000) => {
     const i = await waitFor(target, timeout, 'attached');
     const el = refMap.get(i.ref).deref();
-    if (el.tagName !== 'SELECT') throw new Error('Element is not a <select>: ' + i.role);
     const want = (Array.isArray(values) ? values : [values]).map(String);
+    if (el.tagName !== 'SELECT') {
+      // Custom ARIA / Radix / Headless-UI / Select2 combobox or listbox trigger
+      el.scrollIntoView({ block: 'center', behavior: 'instant' });
+      el.click();
+      await new Promise((r) => setTimeout(r, 80));
+      let picked = null;
+      for (const w of want) {
+        const opts = deepAll('[role="option"], [role="menuitem"], [role="menuitemradio"], [data-radix-collection-item], .select2-results__option, li[role]');
+        const cand = opts.find((o) => visible(o) && (match(name(o), w, true) || o.getAttribute('data-value') === w || o.getAttribute('value') === w))
+          || opts.find((o) => visible(o) && match(name(o), w, false))
+          || byText(w, true) || byText(w, false);
+        if (cand) {
+          cand.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+          cand.click();
+          picked = w;
+        }
+      }
+      if (!picked) throw new Error('No custom dropdown option matching ' + JSON.stringify(want));
+      return { ...i, value: picked, customSelect: true };
+    }
     let hit = 0;
     for (const o of el.options) {
-      const on = want.includes(o.value) || want.some((w) => match(o.label || o.text, w, true));
+      const on = want.includes(o.value) || want.some((w) => match(o.label || o.text, w, true)) || want.some((w) => match(o.label || o.text, w, false));
       if (el.multiple) { o.selected = on; if (on) hit++; }
-      else if (on && !hit) { el.value = o.value; hit++; }
+      else if (on && !hit) { setNative(el, 'value', o.value); hit++; }
     }
     if (!hit) throw new Error('No option matching ' + JSON.stringify(want));
     el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -295,7 +363,7 @@ export const HELPER_SRC = String.raw`(() => {
   });
   const SKIP = /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE|SVG|PATH|META|LINK|HEAD)$/;
   const snapshot = (opts) => {
-    const o = Object.assign({ max: 400, text: true, viewport: false }, opts || {});
+    const o = Object.assign({ max: 400, text: true, viewport: false, interactive: false }, opts || {});
     const out = [];
     let truncated = false;
     const vh = innerHeight, vw = innerWidth;
@@ -334,6 +402,8 @@ export const HELPER_SRC = String.raw`(() => {
         } else if (el.tagName === 'IFRAME') {
           out.push('[' + refOf(el) + '] iframe ' + clip(el.src || '', 60));
           continue;
+        } else if (o.interactive) {
+          /* compact snapshots keep interactive controls, headings, images and iframes only */
         } else if (o.text) {
           const t = directText(el);
           if (t.length > 1) out.push('"' + clip(t, 120) + '"');
@@ -343,8 +413,17 @@ export const HELPER_SRC = String.raw`(() => {
       }
     };
     walk(document.body || document.documentElement);
-    if (truncated) out.push('… truncated at ' + o.max + ' lines (pass max to raise)');
-    return { url: location.href, title: document.title, lines: out };
+    const lines = [];
+    let prev = null, skipped = 0;
+    for (const line of out) {
+      if (line === prev) { skipped++; continue; }
+      lines.push(line);
+      prev = line;
+    }
+    if (truncated) lines.push('truncated at ' + o.max + ' lines (pass max to raise)');
+    else if (skipped) lines.push('deduped ' + skipped + ' repeated lines');
+    return { url: location.href, title: document.title, lines };
+
   };
   const PAY = /cc-(number|csc|exp|name)|card.?num|cardnumber|cvc|cvv|security.?code|iban|routing|account.?number/i;
   const fieldInfo = (el) => {
@@ -359,6 +438,42 @@ export const HELPER_SRC = String.raw`(() => {
     const fs = form ? Array.from(form.querySelectorAll('input,select')) : [];
     const formSensitive = fs.some((x) => (x.type || '').toLowerCase() === 'password') ? 'password' : fs.some((x) => PAY.test(x.getAttribute('autocomplete') || '') || PAY.test(x.name || '') || PAY.test(x.id || '')) ? 'payment' : null;
     return { tag: el.tagName.toLowerCase(), type, isPassword, isPayment, isSubmit, inForm: !!form, formSensitive, isEditable: /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || !!el.isContentEditable };
+  };
+
+  const moveCursor = (x, y, label) => {
+    const id = '__lbd_ai_cursor';
+    let el = document.getElementById(id);
+    if (!el) {
+      el = document.createElement('div');
+      el.id = id;
+      el.setAttribute('aria-hidden', 'true');
+      el.style.cssText = 'position:fixed;left:0;top:0;z-index:2147483646;pointer-events:none;width:18px;height:18px;margin-left:-2px;margin-top:-2px;transition:transform 140ms cubic-bezier(.22,1,.36,1),opacity 120ms;opacity:0;will-change:transform;';
+      el.innerHTML = '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 2 L2 14 L6.2 10.8 L9.8 16.2 L12.2 14.8 L8.6 9.4 L14 9.4 Z" fill="#1a1a1a" stroke="#f4efe6" stroke-width="1.2" stroke-linejoin="round"/></svg><div style="position:absolute;left:16px;top:14px;background:#1a1a1a;color:#f4efe6;font:11px/1.2 ui-sans-serif,system-ui,sans-serif;padding:2px 6px;border-radius:3px;white-space:nowrap;letter-spacing:.02em;"></div>';
+      (document.documentElement || document.body).appendChild(el);
+    }
+    const tag = el.querySelector('div');
+    if (tag) tag.textContent = String(label || 'Luculent').slice(0, 40);
+    el.style.opacity = '1';
+    el.style.transform = 'translate(' + Number(x || 0) + 'px,' + Number(y || 0) + 'px)';
+    return { x, y };
+  };
+  const hideCursor = () => {
+    const el = document.getElementById('__lbd_ai_cursor');
+    if (el) el.style.opacity = '0';
+    return { hidden: true };
+  };
+  const exists = (target) => {
+    if (target == null || target === '') return null;
+    try {
+      const t = parse(target);
+      let el = null;
+      if (t.nth == null && !t.ref) {
+        const all = resolveAll(t);
+        el = all.find((x) => visible(x)) || all[0] || null;
+      } else el = resolve(target);
+      if (!el) return null;
+      return visible(el) ? info(el) : null;
+    } catch (_) { return null; }
   };
   const inspect = (target) => {
     let el = null;
@@ -394,12 +509,45 @@ export const HELPER_SRC = String.raw`(() => {
     return { from: info(a), to: info(b) };
   };
   const isDraggable = (target) => { const el = resolve(target); return !!el && (el.draggable === true || el.getAttribute('draggable') === 'true') && !(el.tagName === 'INPUT'); };
+  const scrollToFind = async (target, maxScrolls = 20, dy = 500) => {
+    for (let i = 0; i <= maxScrolls; i++) {
+      const hit = exists(target);
+      if (hit) {
+        const el = refMap.get(hit.ref)?.deref();
+        if (el) el.scrollIntoView({ block: 'center', behavior: 'instant' });
+        return { ...hit, scrolls: i };
+      }
+      if (i === maxScrolls) break;
+      const scroller = deepAll('[style*="overflow"], [class*="scroll"], [class*="virtual"], main, [role="grid"], [role="listbox"], [role="table"]')
+        .find((el) => el.scrollHeight > el.clientHeight + 20 && visible(el));
+      if (scroller) scroller.scrollTop += dy;
+      else window.scrollBy({ top: dy, behavior: 'instant' });
+      await new Promise((r) => setTimeout(r, 60));
+    }
+    throw new Error('Could not find ' + desc(parse(target)) + ' after ' + maxScrolls + ' scroll steps');
+  };
+  const diagnostics = (clear = false) => {
+    const d = window.__lbdDiag || { console: [], errors: [] };
+    const failedResources = (performance.getEntriesByType('resource') || [])
+      .filter((r) => typeof r.responseStatus === 'number' && r.responseStatus >= 400)
+      .slice(-50)
+      .map((r) => ({ url: clip(r.name, 140), status: r.responseStatus, initiatorType: r.initiatorType || 'other', durationMs: Math.round(r.duration || 0) }));
+    const out = {
+      url: location.href,
+      title: document.title,
+      console: d.console.slice(-50),
+      errors: d.errors.slice(-50),
+      failedResources,
+    };
+    if (clear) { d.console.length = 0; d.errors.length = 0; }
+    return out;
+  };
   const until = (js, timeout = 5000) => new Promise((res, rej) => {
     const f = new Function('return (' + js + ')');
     const t0 = performance.now();
     const tick = async () => { let v; try { v = await f(); } catch (_) { v = false; } if (v) return res({ waitedMs: Math.round(performance.now() - t0) }); if (performance.now() - t0 > timeout) return rej(new Error('Timeout ' + timeout + 'ms waiting for ' + clip(js, 80))); setTimeout(tick, 50); };
     tick();
-  });  const api = { v: ${6}, parse, resolve, waitFor, point, focus, fill, select, check, domClick, extract, scroll, snapshot, info, waitNetwork, waitIdle, inspect, table, media, html5drag, isDraggable, until };
+  });  const api = { v: ${HELPER_VERSION}, parse, resolve, waitFor, point, focus, fill, select, check, domClick, extract, scroll, scrollToFind, diagnostics, snapshot, info, waitNetwork, waitIdle, inspect, exists, moveCursor, hideCursor, table, media, html5drag, isDraggable, until };
   Object.defineProperty(window, '__lbd', { value: api, configurable: true, enumerable: false, writable: true });
   return api;
 })()`;

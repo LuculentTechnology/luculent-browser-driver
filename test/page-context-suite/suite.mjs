@@ -64,7 +64,7 @@ if (SOURCE === 'extension') {
 
 async function ensureTab() {
   const prev = tab;
-  try { tab = (await rpc('tabs.new', { source: SOURCE === 'extension' ? 'extension' : 'headless' })).tab; } catch (e) { console.error('tabs.new failed ' + e.message); }
+  try { tab = (await rpc('tabs.new', { source: SOURCE === 'extension' ? 'extension' : 'headless', fresh: true })).tab; } catch (e) { console.error('tabs.new failed ' + e.message); }
   if (prev && prev !== tab) relay.router.closeTab(prev).catch(() => {});
   return tab;
 }

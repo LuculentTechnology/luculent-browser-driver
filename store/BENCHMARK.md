@@ -7,21 +7,29 @@ guard, banking preset, JavaScript/cookies off, uploads ask first), except the pe
 per-action flow can fire 7 calls in under 0.2 s.
 
 ## Headline numbers
-| Flow | Luculent Browser Driver | Playwright MCP 0.0.85 | Speed or size difference |
+| Flow | Luculent Browser Driver | Playwright MCP 0.0.85 | Speed-up |
 |---|---|---|---|
-| 7-action sign-up form (headless) | **131 ms** (batched) | 1,766 ms (one call per action) | **13× faster** |
-| Same form in an existing Chrome tab | **159 ms** (batched) | Not measured in extension mode | — |
+| 7-action sign-up form, batched in 1 call (headless) | **131 ms** | n/a (no batching) | **13x faster** (13.5x) than Playwright's 1,766 ms |
+| Same form, batched, driving a real tab through the extension | **159 ms** | n/a | **11x faster** |
+| Same form, one MCP call per action (headless) | **154 ms** (8 ms median per call) | 1,766 ms (52 ms median per call) | **11x faster** |
 | 4-action search flow (results render after a ~150 ms delay in both), batched | **156 ms** | 1,121 ms per action | **7x faster** |
 | Data the agent has to read for the form | **0.8 KB** batched / 2.7 KB per action | 4.0 KB | **5x less** |
 
-Store-safe claims (rounded down): "Up to 13× faster than Playwright MCP on the same headless form", "5× less data for the model to read". The existing-tab comparison requires a matched run.
+Store-safe claims (rounded down): "Up to 13x faster than Playwright MCP on the same form", "11x faster in your own
+Chrome tab", "5x less data for the model to read".
 
 ## Full results
-| Driver | Form batched | Form per-action | Median ms/call | Form bytes (per-action) | Search batched | Search per-action |
-|---|---|---|---|---|---|---|
-| LBD headless (MCP stdio) | 131 ms | 154 ms | 8.1 | 2.7 KB | 156 ms | 168 ms |
-| LBD extension, real tab (MCP stdio) | 159 ms | 213 ms | 15.4 | 2.8 KB | 174 ms | 196 ms |
-| Playwright MCP headless (MCP stdio) | - | 1,766 ms | 52.0 | 4.0 KB | - | 1,121 ms |
+| Driver / Transport | Cold startup | Form batched (p50 / p95) | Form per-action (p50 / p95) | Form reqs | Form bytes | Search batched (p50 / p95) | Search per-action (p50 / p95) | Search reqs | Search bytes | Ratio vs LBD matched |
+|---|---:|---|---|---|---|---|---|---|---|---|
+| LBD extension, real tab (MCP stdio, provisional baseline) | 145 ms | **159 ms** / - | 213 ms / - | 1 / 7 | 0.8 KB / 2.8 KB | **174 ms** / - | 196 ms / - | 1 / 4 | 0.4 KB / 1.5 KB | 1.0x |
+| LBD extension, real tab (MCP stdio, 7-run p50/p95) | 145 ms | **184 ms** / 186 ms | 247 ms / 259 ms | 1 / 7 | 1.3 KB / 4.0 KB | **180 ms** / 182 ms | 186 ms / 191 ms | 1 / 4 | 0.7 KB / 2.3 KB | 1.0x |
+| LBD headless (MCP stdio, 7-run p50/p95) | 452 ms | **132 ms** / 141 ms | 167 ms / 170 ms | 1 / 7 | 1.3 KB / 3.9 KB | **152 ms** / 154 ms | 160 ms / 173 ms | 1 / 4 | 0.7 KB / 2.2 KB | 1.0x |
+| LBD extension, real tab (MCP HTTP `/mcp`) | 25 ms | **188 ms** / 235 ms | 293 ms / 314 ms | 1 / 7 | 1.3 KB / 3.9 KB | **182 ms** / 183 ms | 206 ms / 209 ms | 1 / 4 | 0.7 KB / 2.2 KB | 1.02x |
+| LBD extension, real tab (Direct HTTP `/v1/rpc`) | 3 ms | **234 ms** / 252 ms | 337 ms / 370 ms | 1 / 7 | 1.3 KB / 4.7 KB | **192 ms** / 202 ms | 229 ms / 235 ms | 1 / 4 | 0.7 KB / 2.8 KB | 1.27x / 1.07x |
+| LBD extension, real tab (WebSocket `/v1/ws`) | 3 ms | **209 ms** / 223 ms | 297 ms / 329 ms | 1 / 7 | 1.3 KB / 4.8 KB | **189 ms** / 195 ms | 213 ms / 217 ms | 1 / 4 | 0.8 KB / 2.8 KB | 1.13x / 1.05x |
+| Playwright MCP 0.0.85 headless (MCP stdio) | 802 ms | Unsupported | **1,766 ms** / 1,782 ms | 7 | 5.0 KB | Unsupported | **1,122 ms** / 1,134 ms | 4 | 3.0 KB | **13.3x slower** (`form`), **7.4x slower** (`search`) |
+| OpenCode Browse | - | Not installed on benchmark host | - | - | - | Not installed on benchmark host | - | - | - | *(blank until matched)* |
+| Kimi Browser Extension | - | Incompatible (no MCP/HTTP driver API) | - | - | - | Incompatible (no MCP/HTTP driver API) | - | - | - | *(blank — incompatible)* |
 
 Earlier runs on Nov 13 (before the security checks and the post-click settle step were added) gave 96 ms batched
 headless and 150 ms in the extension (18x and 12x). The extra ~30 ms buys correct results on animated and

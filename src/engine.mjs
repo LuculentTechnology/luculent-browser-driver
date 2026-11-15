@@ -2,6 +2,7 @@
 // The same code drives extension-attached tabs (chrome.debugger) and headless tabs (direct CDP).
 import { HELPER_SRC, HELPER_VERSION } from './helper.mjs';
 import { pdfText } from './pdf.mjs';
+import { hasUrlScheme, urlBlocked } from './policy.mjs';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const CTX_GONE = /context was destroyed|Cannot find context|Inspected target navigated|Execution context|Target closed|No frame|Object reference chain|uniqueContextId|Cannot find default execution context/i;
@@ -162,7 +163,7 @@ export class Engine {
 
   async navigate(tab, { url, wait = 'domcontentloaded', timeout = 15000 }) {
     if (!url) throw new Error('navigate needs url');
-    if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) url = 'https://' + url; // "example.com" -> https://example.com
+    if (!hasUrlScheme(url)) url = 'https://' + url; // "example.com" or "localhost:3000" -> https://...
     const s = await this.docState(tab);
     const r = await this.router.send(tab, 'Page.navigate', { url });
     if (r.errorText && r.errorText !== 'net::ERR_ABORTED') throw new Error(`navigate failed: ${r.errorText}`);
@@ -171,6 +172,9 @@ export class Engine {
   }
 
   async mouse(tab, x, y, { button = 'left', clickCount = 1, modifiers = 0 } = {}) {
+    if (this.cursor !== false) {
+      try { await this.helper(tab, 'moveCursor', [x, y, this.cursorLabel || 'Luculent']); } catch (_) {}
+    }
     await this.router.send(tab, 'Input.dispatchMouseEvent', { type: 'mouseMoved', x, y, modifiers });
     for (let i = 1; i <= clickCount; i++) {
       await this.router.send(tab, 'Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button, clickCount: i, modifiers });
@@ -208,20 +212,31 @@ export class Engine {
     return { ...(v || {}), url: nav.url, ...(nav.navigated === false ? { navigated: false } : {}), ...(nav.sameDocument ? { sameDocument: true } : {}) };
   }
 
-  async snapshot(tab, { mode = 'full', max = 400, text = true, viewport = false, frame } = {}) {
-    const snap = await this.helper(tab, 'snapshot', [{ max, text, viewport }], { frame });
+  async snapshot(tab, { mode = 'compact', max, text, viewport = false, frame, updateBaseline = true, interactive } = {}) {
     const key = frame ? tab + '|' + frame : tab;
     const prev = this.snaps.get(key);
-    this.snaps.set(key, { url: snap.url, lines: snap.lines });
-    if (mode === 'diff' && prev && prev.url === snap.url) {
+    const compact = interactive != null ? !!interactive
+      : mode === 'full' ? false
+      : mode === 'compact' ? true
+      : mode === 'diff' ? (prev ? !!prev.compact : true)
+      : true;
+    const snap = await this.helper(tab, 'snapshot', [{
+      max: max ?? (compact ? 120 : 400),
+      text: text != null ? text : !compact,
+      viewport,
+      interactive: interactive != null ? interactive : compact,
+    }], { frame });
+    if (updateBaseline !== false) this.snaps.set(key, { url: snap.url, lines: snap.lines, compact });
+    if ((mode === 'diff' || mode === 'compact') && prev && prev.url === snap.url) {
       const before = new Set(prev.lines);
       const now = new Set(snap.lines);
       const added = snap.lines.filter((l) => !before.has(l));
       const removed = prev.lines.filter((l) => !now.has(l));
       if (added.length + removed.length <= Math.max(8, snap.lines.length * 0.6)) {
-        return { mode: 'diff', url: snap.url, title: snap.title, added, removed, unchanged: snap.lines.length - added.length };
+        return { mode: 'diff', url: snap.url, title: snap.title, added, removed, unchanged: snap.lines.length - added.length, lines: snap.lines };
       }
     }
+    if (compact && mode !== 'full') return { mode: 'compact', url: snap.url, title: snap.title, lines: snap.lines };
     return { mode: 'full', url: snap.url, title: snap.title, lines: snap.lines };
   }
 
@@ -237,8 +252,36 @@ export class Engine {
   }
 
   /** Element centre (or offsetX/offsetY from its top-left) in top-level viewport coordinates. */
+  async currentUrl(tab) {
+    try {
+      const st = await this.docState(tab);
+      return (st && st[2]) || '';
+    } catch (_) { return ''; }
+  }
+
   async pointOf(tab, s, t) {
-    const p = await this.helper(tab, 'point', [s.target, t], { retryUntil: Date.now() + t, frame: s.frame });
+    const url = this.locators ? await this.currentUrl(tab) : '';
+    const targets = [];
+    if (s.target != null) targets.push(s.target);
+    if (this.locators && s.target != null) {
+      const cached = this.locators.get(url, s.target, s);
+      if (cached && cached !== s.target) targets.push(cached);
+    }
+    let p = null, used = s.target;
+    for (const tgt of targets) {
+      try {
+        const hit = await this.helper(tab, 'exists', [tgt], { frame: s.frame });
+        if (!hit) continue;
+        p = await this.helper(tab, 'point', [tgt, Math.min(t, 400)], { retryUntil: Date.now() + Math.min(t, 400), frame: s.frame });
+        used = tgt;
+        break;
+      } catch (_) {}
+    }
+    if (!p) {
+      p = await this.helper(tab, 'point', [s.target, t], { retryUntil: Date.now() + t, frame: s.frame });
+      used = s.target;
+    }
+    if (this.locators && url && used != null) this.locators.put(url, s.target, used, s);
     const ctx = s.frame ? await this.frameCtx(tab, s.frame) : null;
     const ox = ctx ? ctx.offset.x : 0, oy = ctx ? ctx.offset.y : 0;
     const x = (s.offsetX != null ? p.left + Number(s.offsetX) : p.x) + ox;
@@ -246,8 +289,14 @@ export class Engine {
     return { ...p, x, y };
   }
 
+  async prefetch(tab, step) {
+    if (!step || step.target == null) return null;
+    try { return await this.helper(tab, 'exists', [step.target], { frame: step.frame }); }
+    catch (_) { return null; }
+  }
+
   /** Let frameworks finish re-rendering after Enter / client-side route changes: DOM quiet for 80 ms, max 1 s. */
-  async settle(tab, opts = {}) { await this.helper(tab, 'waitIdle', [80, 1000], opts).catch(() => {}); }
+  async settle(tab, opts = {}) { await this.helper(tab, 'waitIdle', [80, 400], opts).catch(() => {}); }
 
   async tabIds() {
     if (!this.router.tabs) return new Set();
@@ -281,15 +330,19 @@ export class Engine {
     const t = s.timeout || 5000;
     const F = { frame: s.frame };
     switch (s.action) {
-      case 'navigate': case 'goto': return this.navigate(tab, s);
-      case 'click': case 'dblclick': case 'rightclick': {
+      case 'navigate': case 'goto': case 'open': return this.navigate(tab, s);
+      case 'click': case 'dblclick': case 'rightclick': case 'tap': {
         const before = s.expectPopup ? await this.tabIds() : null;
         const v = await this.withNav(tab, s, async () => {
           const button = s.action === 'rightclick' ? 'right' : s.button || 'left';
           const clickCount = s.action === 'dblclick' ? 2 : 1;
           if (s.target == null && s.x != null && s.y != null) { await this.mouse(tab, Number(s.x), Number(s.y), { button, clickCount }); return { x: s.x, y: s.y }; }
-          if (s.js) return this.helper(tab, 'domClick', [s.target, t], F);
+          if (s.js || s.force) return this.helper(tab, 'domClick', [s.target, t], F);
           const p = await this.pointOf(tab, s, t);
+          if (p.covered && button === 'left' && clickCount === 1) {
+            await this.helper(tab, 'domClick', [p.ref || s.target, t], F);
+            return { ref: p.ref, role: p.role, name: p.name, coveredFallback: true, warning: 'element was covered at click point; dispatched direct DOM click fallback' };
+          }
           await this.mouse(tab, p.x, p.y, { button, clickCount });
           return { ref: p.ref, role: p.role, name: p.name, ...(p.covered ? { warning: 'element was covered at click point (an overlay, banner or dialog may have received the click)' } : {}) };
         });
@@ -326,7 +379,7 @@ export class Engine {
         await this.router.send(tab, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: bx, y: by, button: 'left', clickCount: 1 });
         return { from: { x: Math.round(a.x), y: Math.round(a.y) }, to: { x: Math.round(bx), y: Math.round(by) } };
       }
-      case 'type': case 'fill': {
+      case 'type': case 'fill': case 'input': {
         return this.withNav(tab, s, async () => {
           let i;
           if (s.action === 'fill' || s.fast) i = await this.helper(tab, 'fill', [s.target, String(s.text ?? s.value ?? ''), t], F);
@@ -412,7 +465,7 @@ export class Engine {
           throw new Error(`Timeout ${t}ms waiting for ${String(s.js).slice(0, 80)}`);
         }
         if (s.network) return this.helper(tab, 'waitNetwork', [s.network, s.timeout || 10000, !!s.fresh], { retryUntil: Date.now() + (s.timeout || 10000) });
-        if (s.idle) return this.helper(tab, 'waitIdle', [s.idle === true ? 500 : s.idle, s.timeout || 15000]);
+        if (s.idle) return this.helper(tab, 'waitIdle', [s.idle === true ? 200 : s.idle, s.timeout || 2000]);
         if (s.load) { const st = await this.docState(tab); if (st && (st[1] === 'complete' || (s.load !== 'load' && st[1] === 'interactive'))) return { url: st[2] }; return this.waitLoad(tab, null, s.load === 'load' ? 'load' : 'domcontentloaded', s.timeout || 15000); }
         if (s.url) {
           const deadline = Date.now() + t;
@@ -428,7 +481,7 @@ export class Engine {
         if (target == null) { const st = await this.docState(tab); if (st && st[1] !== 'loading') return { url: st[2] }; return this.waitLoad(tab, null, 'domcontentloaded', s.timeout || 15000); }
         return this.helper(tab, 'waitFor', [target, t, s.state || 'visible'], { retryUntil: Date.now() + t, ...F });
       }
-      case 'extract': case 'text':
+      case 'extract': case 'text': case 'read':
         if (s.wait !== false && s.target != null && !s.all) await this.helper(tab, 'waitFor', [s.target, t, 'attached'], { retryUntil: Date.now() + t, ...F });
         return this.helper(tab, 'extract', [s.target ?? null, s.what || 'text', s.attr || null, !!s.all, s.max || 200, !!opts.redactPasswords], F);
       case 'table':
@@ -442,7 +495,11 @@ export class Engine {
         return { url, ...pdfText(buf, s.max || 20000) };
       }
       case 'eval': return this.evaluate(tab, s.js ?? s.expression, { ctx: s.frame ? await this.frameCtx(tab, s.frame) : null });
-      case 'scroll': return this.helper(tab, 'scroll', [s.target ?? null, s.dy ?? 600, s.dx ?? 0], F);
+      case 'scroll': {
+        if (s.find != null || s.untilVisible) return this.helper(tab, 'scrollToFind', [s.find ?? s.target, s.maxScrolls || 20, s.dy ?? 500], F);
+        return this.helper(tab, 'scroll', [s.target ?? null, s.dy ?? 600, s.dx ?? 0], F);
+      }
+      case 'diagnostics': return this.helper(tab, 'diagnostics', [!!s.clear], F);
       case 'snapshot': return this.snapshot(tab, s);
       case 'screenshot': return this.screenshot(tab, s);
       case 'back': case 'forward': {
@@ -489,10 +546,10 @@ export class Engine {
         if (e.denied || (stopOnError && !s.optional)) { if (s.optional && !e.denied) continue; break; }
       }
     }
-    if (results.length && results.every((r) => r.ok || steps[r.i].optional)) ok = true;
+    if (results.length && results.every((r) => r.ok || (steps[r.i].optional && !r.denied))) ok = true;
     const out = { ok, tab, results };
     // On a failed step always attach a compact snapshot so the agent can pick a valid target next turn.
-    const mode = snapshot && snapshot !== 'none' ? snapshot : ok ? null : 'full';
+    const mode = snapshot && snapshot !== 'none' ? snapshot : ok ? null : 'compact';
     if (mode) {
       try { out.snapshot = await this.snapshot(tab, { mode, ...(snapshotMax ? { max: snapshotMax } : {}) }); } catch (e) { out.snapshotError = e.message; }
     }
@@ -504,6 +561,7 @@ export class Engine {
 export function formatSnapshot(s) {
   if (!s) return '';
   const head = `${s.title ? s.title + ' - ' : ''}${s.url}`;
+  if (s.mode === 'compact') return [`${head}  [compact ${s.lines.length} lines]`, ...s.lines].join('\n');
   if (s.mode === 'diff') {
     if (!s.added.length && !s.removed.length) return `${head}\n(no change, ${s.unchanged} lines)`;
     return [`${head}  [diff: +${s.added.length} -${s.removed.length}, ${s.unchanged} unchanged]`, ...s.removed.map((l) => '- ' + l), ...s.added.map((l) => '+ ' + l)].join('\n');

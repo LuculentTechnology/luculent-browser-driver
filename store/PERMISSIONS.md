@@ -25,5 +25,6 @@ redaction, eval/storage/cookie permissions, approval prompts for sensitive form 
 | `sidePanel` | A chat panel in Chrome so you can talk to the AI agent that is driving your browser, see its provider, model and chat name, and pull page context. |
 | `tabGroups` | Put each agent's tabs in a named, colored tab group so concurrent sessions stay distinguishable. |
 | `scripting` | Read a compact snapshot of the current page when you click Pull page context, and fill or read a page if Chrome refuses a debugger attach (for example a password-manager iframe). |
+| `offscreen` | Play an optional, user-enabled completion chime via the Web Audio API when an AI agent finishes driving a tab (Manifest V3 service workers cannot access `AudioContext` directly). |
 
 Host permissions (`http://*/*`, `https://*/*`) are required for `chrome.scripting` on granted tabs. The extension still only acts on tabs you grant.

@@ -54,6 +54,7 @@ export function normalize(p = {}) {
   out.grantMode = out.grantMode === 'all' ? 'all' : 'granted';
   out.blocklist = [].concat(out.blocklist || []).map(String).filter(Boolean);
   out.allowlist = [].concat(out.allowlist || []).map(String).filter(Boolean);
+  out.allowlistRequired = !!out.allowlistRequired;
   out.rateLimit = { perSecond: Math.max(1, Number(out.rateLimit?.perSecond) || 20), perMinute: Math.max(1, Number(out.rateLimit?.perMinute) || 600) };
   out.confirmTimeoutSec = Math.min(600, Math.max(5, Number(out.confirmTimeoutSec) || 60));
   return out;
@@ -83,11 +84,22 @@ export function effective(global, key) {
   return e;
 }
 
+export function hasUrlScheme(url) {
+  const m = /^([a-z][a-z0-9+.-]*):/i.exec(String(url || ''));
+  if (!m) return false;
+  const rest = String(url).slice(m[0].length);
+  if (rest.startsWith('//')) return true;
+  if (/^\d/.test(rest)) return false; // localhost:3000 or example.com:8080, not a scheme
+  return !m[1].includes('.');
+}
+
 export function hostMatch(pattern, host) {
   if (!pattern || !host) return false;
+  const canon = (h) => String(h).replace(/\.+$/, '').toLowerCase();
+  host = canon(host);
   if (pattern === '*') return true;
   if (pattern.length > 2 && pattern.startsWith('/') && pattern.endsWith('/')) { try { return new RegExp(pattern.slice(1, -1), 'i').test(host); } catch (_) { return false; } }
-  const p = pattern.replace(/^\*\./, '').toLowerCase();
+  const p = canon(pattern.replace(/^\*\./, ''));
   return host === p || host.endsWith('.' + p);
 }
 
@@ -96,7 +108,7 @@ export function hostMatch(pattern, host) {
 export function isChromeWebStore(url) {
   try {
     const u = new URL(url);
-    const host = u.hostname.toLowerCase();
+    const host = u.hostname.replace(/\.+$/, '').toLowerCase();
     const path = u.pathname.toLowerCase();
     if (host === 'chromewebstore.google.com' || host.endsWith('.chromewebstore.google.com')) return true;
     if ((host === 'chrome.google.com' || host === 'www.chrome.google.com') && (path === '/webstore' || path.startsWith('/webstore/'))) return true;
@@ -112,14 +124,18 @@ export function urlBlocked(e, url) {
   try { u = new URL(url); } catch (_) { return null; }
   if (u.protocol === 'javascript:') return 'javascript: URLs are blocked';
   if (u.protocol === 'about:' && /^about:(blank|srcdoc)$/i.test(url.split(/[?#]/)[0])) return null;
-  if (u.protocol === 'data:' || u.protocol === 'blob:') return null;
+  if (u.protocol === 'data:') return null;
+  if (u.protocol === 'blob:') {
+    if (u.origin && u.origin !== 'null' && /^https?:/i.test(u.origin)) return urlBlocked(e, u.origin);
+    return null;
+  }
   if (INTERNAL.test(url)) return e.internalPages === 'allow' ? null : `browser-internal and extension pages are blocked by your security settings (${u.protocol}//)`;
   if (isChromeWebStore(url)) return 'Chrome Web Store pages are blocked by your security settings';
   if (u.protocol === 'file:') return e.fileUrls === 'allow' ? null : 'file:// URLs are blocked by your security settings';
-  const host = u.hostname.toLowerCase();
+  const host = u.hostname.replace(/\.+$/, '').toLowerCase();
   if (e.bankingPreset && BANKING_PRESET.some((p) => hostMatch(p, host))) return `${host} is on the banking/payment blocklist (turn off "Block banking and payment sites" to allow)`;
   if (e.blocklist.some((p) => hostMatch(p, host))) return `${host} is on your blocklist`;
-  if (e.allowlist.length && !e.allowlist.some((p) => hostMatch(p, host))) return `${host} is not on your allowlist`;
+  if ((e.allowlistRequired || e.allowlist.length) && !e.allowlist.some((p) => hostMatch(p, host))) return `${host} is not on your allowlist`;
   if (e.keyAllow && e.keyAllow.length && !e.keyAllow.some((p) => hostMatch(p, host))) return `this API key may not act on ${host}`;
   return null;
 }

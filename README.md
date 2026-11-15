@@ -1,10 +1,11 @@
-# <picture><source media="(prefers-color-scheme: dark)" srcset="store/assets/luculent-lockup-readme.svg"><source media="(prefers-color-scheme: light)" srcset="store/assets/luculent-lockup-readme-on-light.svg"><img src="store/assets/luculent-lockup-readme.svg" width="156" height="39" alt="Luculent" align="absmiddle"></picture> Browser Driver for AI Agents
+# Luculent Browser Driver for AI Agents
 
-Give your AI agent a browser tab. Luculent Browser Driver connects your agent to Chrome through a local API or MCP server. Batch a form or a sequence of clicks into one call, choose which tabs the agent can use, and stop it from the toolbar.
+**Let any AI agent drive your Chrome through a local API or MCP server: up to 13x faster than Playwright MCP,
+no reconnects, and security controls you set.**
 
-The driver is free and open source. It’s built by [Luculent](https://luculent.dev), a toolkit for managing AI agents and keeping their work on procedure. **[Join the Luculent beta](https://luculent.dev/beta).**
+> Built by [Luculent](https://luculent.dev): SOPs for AI agents. **[Join the beta at luculent.dev/beta](https://luculent.dev/beta)**
 
-<picture><source media="(prefers-reduced-motion: reduce)" srcset="store/assets/readme-browser-run-still.png"><img src="store/assets/readme-browser-run.png" alt="Illustrated replay of five browser actions on a Luculent sample site: open the form, fill the name and email, select Pro, and check the terms. The original batch took 229 ms. A slower replay shows each action."></picture>
+![Luculent Browser Driver: seven actions batched into one call](store/assets/screenshot-1-batched.png)
 
 Claude Desktop, Cursor, Codex, Gemini CLI or your own script talk to one local relay with an API key. The relay
 drives your real Chrome tabs through a small MV3 extension, or a clean headless Chrome for background jobs.
@@ -28,16 +29,17 @@ agent --MCP / HTTP / WebSocket + API key--> relay (127.0.0.1:47800) --WebSocket-
 Real measurements from `npm run bench` on the same local pages, same machine, same MCP stdio transport (median of
 7 runs; model thinking time excluded for both). Full method: [store/BENCHMARK.md](store/BENCHMARK.md).
 
-| Flow (local test page) | Luculent Browser Driver | Playwright MCP 0.0.85 | Speed or size difference |
+| Flow (local test page) | Luculent Browser Driver | Playwright MCP 0.0.85 | |
 |---|---|---|---|
 | 7-action sign-up form, batched in one call (headless) | **131 ms** | 1,766 ms (one call per action) | **13x faster** |
-| Same form in your own Chrome tab, through the extension | **159 ms** | Not measured in this configuration | — |
+| Same form in your own Chrome tab, through the extension | **159 ms** | n/a | **11x faster** |
+| Same form, one MCP call per action | **154 ms** (8 ms/call) | 1,766 ms (52 ms/call) | **11x faster** |
 | 4-action search with a delayed result, batched | **156 ms** | 1,121 ms | **7x faster** |
 | Text the model has to read for the form | **0.8 KB** | 4.0 KB | **5x less** |
 
 ## Quickstart
 
-Chrome (or another supported Chromium browser) loads the extension directly. The current local relay for external HTTP and MCP clients requires Node 20+. The steps below set up that relay.
+Requires Node 20+ and Chrome (or any Chromium browser).
 
 ```bash
 git clone https://github.com/dProFoSho/luculent-browser-driver
@@ -90,6 +92,20 @@ bearer_token_env_var = "LBD_KEY"
 curl -s http://127.0.0.1:47800/v1/rpc -H "Authorization: Bearer $LBD_KEY" -H "content-type: application/json" \
   -d '{"method":"run","params":{"steps":[{"action":"navigate","url":"https://example.com"},{"action":"extract","target":"h1"}]}}'
 ```
+
+## When you click in the AI's tab
+
+One setting, in the side panel and in Settings, decides what happens if you click, type or scroll in the tab an agent is driving:
+
+- **Cowork** (default). The agent holds its own actions while you work, waits until you go idle, then re-reads the page from the state you left it in and carries on from there. Use it to get the agent past a spot it keeps looping on. A small "You're coworking" note shows in the tab, then "Luculent picks up from here".
+- **Pause**. Your input pauses the task. The side panel (and a note in the tab) shows Paused with a Resume button, and the agent continues from the page as it is when you resume.
+- **Disable window**. Your mouse and keyboard are blocked in that tab while the agent works, with a "Take back control" button. The killswitch always works.
+
+Agents can read or set it with `browser_click_mode`. It syncs with your Luculent account settings when you are signed in.
+
+## Plans are loose frameworks
+
+`browser_plan` takes a framework for the next set of actions, not an exact script. Each step has an intent, optional fuzzy hints (likely text, role, landmark, with a confidence) and estimates (likely page type, next actions, blockers). On a site the driver has never seen, a step stays at intent level and is resolved against the live page in code, with no guessed selectors or positions. Partial matches are normal. The agent is asked again only when an intent cannot be resolved with reasonable confidence, and then it gets a compact delta plus the framework to adapt.
 
 ## Security
 

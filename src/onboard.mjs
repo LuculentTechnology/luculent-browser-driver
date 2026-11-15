@@ -1,6 +1,6 @@
-// One-click setup: mint a key to a file, write MCP configs, optionally start the relay at logon.
+// One-click setup: mint a key to a file, write MCP configs, optionally start the relay at logon (LUC-3078).
 // Setup results report file paths only — never the API key itself.
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,9 +33,17 @@ export function mcpStdioBlock({ nodePath, cliPath, keyFile, port }) {
   };
 }
 
-function readJson(p) { try { return JSON.parse(readFileSync(p, 'utf8')); } catch (_) { return {}; } }
+function readJson(p) {
+  try {
+    return JSON.parse(readFileSync(p, 'utf8'));
+  } catch (e) {
+    if (e && e.code === 'ENOENT') return {};
+    throw new Error('Cannot parse ' + p + ': ' + ((e && e.message) || e) + '. Refusing to overwrite a config file that did not parse.');
+  }
+}
 function writeJson(p, obj) {
   mkdirSync(dirname(p), { recursive: true, mode: 0o700 });
+  if (existsSync(p)) { try { copyFileSync(p, p + '.bak'); } catch (_) {} }
   const tmp = p + '.tmp';
   writeFileSync(tmp, JSON.stringify(obj, null, 2) + '\n', { mode: 0o600 });
   renameSync(tmp, p);
