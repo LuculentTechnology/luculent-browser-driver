@@ -8,11 +8,18 @@ agent --MCP/HTTP/WS + API key--> relay (127.0.0.1:47800) --WebSocket--> extensio
                                           \--------------- CDP ---------------> headless Chrome (background jobs)
 ```
 
-## 1. Quick Install (Automated Dependencies)
+## 1. Quick Setup by Scenario
 
-No Node.js or manual runtime configuration needed. Dependencies install automatically.
+### Scenario A: In-Browser Diagnostics & Testing (Zero Extra Software)
+If you only need in-browser Click Testing, Visual Checks, or Code Diagnostics:
+1. Install **Luculent Browser Driver for AI Agents** from the **[Chrome Web Store](https://chromewebstore.google.com/search/Luculent%20Browser%20Driver%20for%20AI%20Agents)** (or load unpacked).
+2. Open the extension popup on any tab to run tests directly inside Chrome. **No relay or background software required.**
 
-### Option A: 1-Line Zero-Dependency Auto-Installer (Recommended)
+### Scenario B: Connecting External AI Agents (Claude, Cursor, Codex, Gemini)
+To allow external agents outside Chrome to drive your browser over MCP or HTTP, start the local relay:
+
+#### 1-Line Zero-Dependency Auto-Installer (Recommended)
+Automatically configures the portable background runtime (no manual Node installation required), sets up the relay, and mints your API key:
 
 **Windows (PowerShell):**
 ```powershell
@@ -24,19 +31,8 @@ irm https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver
 curl -fsSL https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.sh | bash
 ```
 
-*This automatically checks for a compatible Node runtime, installs a background portable runtime if one is missing, stages the driver, places `lbd` on your PATH, and mints your initial API key.*
-
-### Option B: If you already have Node.js / npx
-```bash
-npx luculent-browser-driver start
-```
-
-### Option C: Manual Source Setup (for Contributors)
-```bash
-git clone https://github.com/LuculentTechnology/luculent-browser-driver
-cd luculent-browser-driver
-npm install
-```
+*Already have Node / npx? Run `npx luculent-browser-driver start`.*  
+*Contributors developing from source can run `git clone https://github.com/LuculentTechnology/luculent-browser-driver && cd luculent-browser-driver && npm install`.*
 
 ### Load the extension into Chrome
 Install **Luculent Browser Driver for AI Agents** from the Chrome Web Store, or load it unpacked:

@@ -106,36 +106,29 @@ Real measurements from `npm run bench` on the same local pages, same machine, sa
 | 4-action search with delayed result, batched | **171.0 ms** | 1,109.2 ms | 2,101.1 ms | **6.5x – 12.3x faster** |
 | Payload the model has to read for the form | **1.3 KB** | 5.1 KB | 8.2 KB | **3.9x – 6.3x less** |
 
-## Quickstart (Zero-Dependency Auto-Install)
+## Quickstart
 
-No Node.js or manual runtime setup required — any needed dependencies install automatically in the background.
+Choose your setup based on what you need:
 
-### 1. Install the Chrome Extension
-Install **Luculent Browser Driver for AI Agents** directly from the **[Chrome Web Store](https://chromewebstore.google.com/search/Luculent%20Browser%20Driver%20for%20AI%20Agents)** (or load the `extension` folder unpacked in Developer Mode). **The extension itself runs entirely inside Chrome with zero extra software required.**
+### Scenario A: In-Browser Diagnostics & Testing (Zero Extra Software)
+If you only want in-browser testing, install the extension from the **[Chrome Web Store](https://chromewebstore.google.com/search/Luculent%20Browser%20Driver%20for%20AI%20Agents)**. Open the extension popup on any tab to run Click Tests, Visual Checks, and Code Audits directly in Chrome. **No relay, Node, or background processes required.**
 
-### 2. Auto-Install & Start the Local Agent Relay
-Run the 1-line auto-installer for your operating system. It automatically installs a portable background runtime (if you don't already have one), configures the global `lbd` command, sets up the local relay, and mints your agent API key:
+### Scenario B: Driving Chrome with External AI Agents (Claude, Cursor, Codex, Gemini)
+To let external AI agents control your browser tabs over MCP or HTTP, connect Chrome to the local agent relay:
 
-**Windows (PowerShell):**
-```powershell
-irm https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.ps1 | iex
-```
-
-**macOS / Linux (Terminal):**
-```bash
-curl -fsSL https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.sh | bash
-```
-
-**If you already have Node / npx installed:**
-```bash
-npx luculent-browser-driver start
-```
-
-### 3. Grant a Tab
-Open any Chrome tab you want an agent to drive, click the **Luculent** extension icon in your toolbar, and choose **Let agents use this tab**. Tabs an agent creates itself are granted automatically.
-
-### 4. Connect Your Agent
-Use `lbd start` to run the relay, and point your MCP client or agent to `http://127.0.0.1:47800/mcp`.
+1. **Install the Extension**: From the **[Chrome Web Store](https://chromewebstore.google.com/search/Luculent%20Browser%20Driver%20for%20AI%20Agents)** (or load unpacked).
+2. **Start the Relay**: Run the 1-line auto-installer (automatically configures the portable runtime in the background if Node is not on your machine):
+   - **Windows (PowerShell)**:
+     ```powershell
+     irm https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.ps1 | iex
+     ```
+   - **macOS / Linux (Terminal)**:
+     ```bash
+     curl -fsSL https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.sh | bash
+     ```
+   - *Already have Node/npx?* `npx luculent-browser-driver start`
+3. **Grant Tab**: Open the extension icon on your target tab and click **Let agents use this tab**.
+4. **Connect Agent**: Point your agent's MCP config to `http://127.0.0.1:47800/mcp`.
 
 <details>
 <summary><b>Manual Development from Source (for contributors)</b></summary>
