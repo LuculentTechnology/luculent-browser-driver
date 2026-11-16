@@ -1,55 +1,59 @@
 {
   "iters": 7,
   "machine": "AMD Ryzen 5 5500, 32 GB, win32",
-  "date": "2026-11-14T08:06:04.680Z",
+  "date": "2026-11-16T05:52:11.941Z",
   "lbdHeadless": {
     "form": {
-      "batchedMs": 131.21200000000044,
-      "perActionMs": 153.96070000000054,
-      "msPerCall": 8.142699999999877,
+      "batchedMs": 130.62900000000013,
+      "perActionMs": 165.37689999999975,
+      "msPerCall": 5.923899999999776,
       "actions": 7,
       "bytesBatched": 781,
-      "bytesPerAction": 2709
+      "bytesPerAction": 2613
     },
     "search": {
-      "batchedMs": 155.84010000000035,
-      "perActionMs": 168.00790000000052,
-      "msPerCall": 23.646999999999935,
+      "batchedMs": 163.48269999999957,
+      "perActionMs": 167.6861999999992,
+      "msPerCall": 25.910399999999754,
       "actions": 4,
-      "bytesBatched": 403,
-      "bytesPerAction": 1488
+      "bytesBatched": 402,
+      "bytesPerAction": 1486
     }
   },
   "lbdExtension": {
     "form": {
-      "batchedMs": 158.6836999999996,
-      "perActionMs": 212.9269000000022,
-      "msPerCall": 15.354199999999764,
+      "batchedMs": 177.32489999999962,
+      "perActionMs": 236.67549999999937,
+      "msPerCall": 14.449699999999211,
       "actions": 7,
-      "bytesBatched": 792,
-      "bytesPerAction": 2763
+      "bytesBatched": 793,
+      "bytesPerAction": 2662
     },
     "search": {
-      "batchedMs": 173.57940000000053,
-      "perActionMs": 195.5170999999973,
-      "msPerCall": 28.99619999999959,
+      "batchedMs": 177.96630000000005,
+      "perActionMs": 192.90800000000127,
+      "msPerCall": 35.58379999999852,
       "actions": 4,
-      "bytesBatched": 410,
+      "bytesBatched": 411,
       "bytesPerAction": 1514
     }
+  },
+  "coldStart": {
+    "lbdHeadlessMs": 521.8292000000001,
+    "playwrightMcpMs": 773.8061000000016
   },
   "playwrightMcp": {
     "formActions": 7,
     "form": {
-      "perActionMs": 1766.3299000000006,
-      "msPerCall": 52.02480000000287,
+      "perActionMs": 1748.4472999999998,
+      "msPerCall": 45.25999999999476,
       "actions": 7,
       "bytesPerAction": 4063
     },
     "searchActions": 4,
     "search": {
-      "perActionMs": 1120.859600000007,
-      "msPerCall": 513.7508000000016,
+      "perActionMs": 1115.3455999999933,
+      "msPerCall": 505.58490000000165,
       "actions": 4,
       "bytesPerAction": 2427
     }

@@ -1,0 +1,452 @@
+{
+  "summary": {
+    "total": 55,
+    "pass": 51,
+    "fail": 1,
+    "blocked": 3,
+    "source": "headless",
+    "at": "2026-11-16T06:40:37.326Z"
+  },
+  "results": [
+    {
+      "id": "wikipedia-search",
+      "cat": "search+extract",
+      "kind": "live",
+      "status": "pass",
+      "ms": 2733,
+      "error": null
+    },
+    {
+      "id": "wikipedia-table",
+      "cat": "tables",
+      "kind": "live",
+      "status": "pass",
+      "ms": 782,
+      "error": null
+    },
+    {
+      "id": "github-repo",
+      "cat": "search+extract",
+      "kind": "live",
+      "status": "pass",
+      "ms": 3421,
+      "error": null
+    },
+    {
+      "id": "github-tree-spa",
+      "cat": "spa",
+      "kind": "live",
+      "status": "fail",
+      "ms": 12485,
+      "error": "step 1 wait: Timeout waiting for url containing package.json [title: GitHub - microsoft/playwright-mcp: Playwright MCP server · G]"
+    },
+    {
+      "id": "mdn-search",
+      "cat": "spa",
+      "kind": "live",
+      "status": "pass",
+      "ms": 2166,
+      "error": null
+    },
+    {
+      "id": "mdn-doc-extract",
+      "cat": "search+extract",
+      "kind": "live",
+      "status": "pass",
+      "ms": 763,
+      "error": null
+    },
+    {
+      "id": "hn-front-new",
+      "cat": "navigation",
+      "kind": "live",
+      "status": "pass",
+      "ms": 801,
+      "error": null
+    },
+    {
+      "id": "reddit-old",
+      "cat": "search+extract",
+      "kind": "live",
+      "status": "blocked",
+      "ms": 4093,
+      "error": "step 0 extract: Error: No element for {\"css\":\"a.title\"}"
+    },
+    {
+      "id": "ebay-browse",
+      "cat": "e-commerce",
+      "kind": "live",
+      "status": "blocked",
+      "ms": 1806,
+      "error": "step 0 extract: Error: No element for {\"css\":\".s-item__title, .s-card__title, [role=heading]\"}"
+    },
+    {
+      "id": "amazon-browse",
+      "cat": "e-commerce",
+      "kind": "live",
+      "status": "blocked",
+      "ms": 940,
+      "error": "step 0 extract: Error: No element for {\"css\":\"h2 span, [data-cy=title-recipe] span\"}"
+    },
+    {
+      "id": "google-maps",
+      "cat": "canvas",
+      "kind": "live",
+      "status": "pass",
+      "ms": 5129,
+      "error": null
+    },
+    {
+      "id": "youtube-video",
+      "cat": "video",
+      "kind": "live",
+      "status": "pass",
+      "ms": 7115,
+      "error": null
+    },
+    {
+      "id": "codepen-editor-iframe",
+      "cat": "editors",
+      "kind": "live",
+      "status": "pass",
+      "ms": 1482,
+      "error": null
+    },
+    {
+      "id": "ti-hovers",
+      "cat": "hover",
+      "kind": "live",
+      "status": "pass",
+      "ms": 1428,
+      "error": null
+    },
+    {
+      "id": "ti-drag-drop",
+      "cat": "drag",
+      "kind": "live",
+      "status": "pass",
+      "ms": 154,
+      "error": null
+    },
+    {
+      "id": "ti-iframe-tinymce",
+      "cat": "iframes",
+      "kind": "live",
+      "status": "pass",
+      "ms": 1324,
+      "error": null
+    },
+    {
+      "id": "ti-nested-frames",
+      "cat": "iframes",
+      "kind": "live",
+      "status": "pass",
+      "ms": 420,
+      "error": null
+    },
+    {
+      "id": "ti-js-alerts",
+      "cat": "dialogs",
+      "kind": "live",
+      "status": "pass",
+      "ms": 254,
+      "error": null
+    },
+    {
+      "id": "ti-dynamic-loading",
+      "cat": "navigation",
+      "kind": "live",
+      "status": "pass",
+      "ms": 5281,
+      "error": null
+    },
+    {
+      "id": "ti-infinite-scroll",
+      "cat": "scroll",
+      "kind": "live",
+      "status": "pass",
+      "ms": 4849,
+      "error": null
+    },
+    {
+      "id": "ti-shadowdom",
+      "cat": "shadow-dom",
+      "kind": "live",
+      "status": "pass",
+      "ms": 153,
+      "error": null
+    },
+    {
+      "id": "ti-context-menu",
+      "cat": "mouse",
+      "kind": "live",
+      "status": "pass",
+      "ms": 245,
+      "error": null
+    },
+    {
+      "id": "ti-key-presses",
+      "cat": "keyboard",
+      "kind": "live",
+      "status": "pass",
+      "ms": 181,
+      "error": null
+    },
+    {
+      "id": "ti-tables",
+      "cat": "tables",
+      "kind": "live",
+      "status": "pass",
+      "ms": 325,
+      "error": null
+    },
+    {
+      "id": "ti-windows",
+      "cat": "tabs",
+      "kind": "live",
+      "status": "pass",
+      "ms": 430,
+      "error": null
+    },
+    {
+      "id": "ti-dropdown",
+      "cat": "select",
+      "kind": "live",
+      "status": "pass",
+      "ms": 225,
+      "error": null
+    },
+    {
+      "id": "ti-checkboxes",
+      "cat": "forms",
+      "kind": "live",
+      "status": "pass",
+      "ms": 167,
+      "error": null
+    },
+    {
+      "id": "ti-entry-ad-modal",
+      "cat": "modals",
+      "kind": "live",
+      "status": "pass",
+      "ms": 1212,
+      "error": null
+    },
+    {
+      "id": "ti-slider",
+      "cat": "drag",
+      "kind": "live",
+      "status": "pass",
+      "ms": 819,
+      "error": null
+    },
+    {
+      "id": "ti-jqueryui-menu",
+      "cat": "hover",
+      "kind": "live",
+      "status": "pass",
+      "ms": 1652,
+      "error": null
+    },
+    {
+      "id": "ti-geolocation",
+      "cat": "permissions",
+      "kind": "live",
+      "status": "pass",
+      "ms": 271,
+      "error": null
+    },
+    {
+      "id": "ti-large-dom",
+      "cat": "tables",
+      "kind": "live",
+      "status": "pass",
+      "ms": 1344,
+      "error": null
+    },
+    {
+      "id": "ti-upload",
+      "cat": "files",
+      "kind": "live",
+      "status": "pass",
+      "ms": 567,
+      "error": null
+    },
+    {
+      "id": "demoqa-date-picker",
+      "cat": "datepicker",
+      "kind": "live",
+      "status": "pass",
+      "ms": 3328,
+      "error": null
+    },
+    {
+      "id": "demoqa-react-select",
+      "cat": "select",
+      "kind": "live",
+      "status": "pass",
+      "ms": 810,
+      "error": null
+    },
+    {
+      "id": "demoqa-droppable",
+      "cat": "drag",
+      "kind": "live",
+      "status": "pass",
+      "ms": 2806,
+      "error": null
+    },
+    {
+      "id": "demoqa-modal",
+      "cat": "modals",
+      "kind": "live",
+      "status": "pass",
+      "ms": 1377,
+      "error": null
+    },
+    {
+      "id": "demoqa-text-box",
+      "cat": "forms",
+      "kind": "live",
+      "status": "pass",
+      "ms": 1016,
+      "error": null
+    },
+    {
+      "id": "demoqa-form-validation",
+      "cat": "forms",
+      "kind": "live",
+      "status": "pass",
+      "ms": 549,
+      "error": null
+    },
+    {
+      "id": "uitp-dynamicid",
+      "cat": "locators",
+      "kind": "live",
+      "status": "pass",
+      "ms": 1143,
+      "error": null
+    },
+    {
+      "id": "uitp-loaddelay",
+      "cat": "navigation",
+      "kind": "live",
+      "status": "pass",
+      "ms": 6225,
+      "error": null
+    },
+    {
+      "id": "uitp-ajax",
+      "cat": "navigation",
+      "kind": "live",
+      "status": "pass",
+      "ms": 15608,
+      "error": null
+    },
+    {
+      "id": "uitp-clientdelay",
+      "cat": "navigation",
+      "kind": "live",
+      "status": "pass",
+      "ms": 15453,
+      "error": null
+    },
+    {
+      "id": "uitp-textinput",
+      "cat": "forms",
+      "kind": "live",
+      "status": "pass",
+      "ms": 558,
+      "error": null
+    },
+    {
+      "id": "uitp-scrollbars",
+      "cat": "scroll",
+      "kind": "live",
+      "status": "pass",
+      "ms": 472,
+      "error": null
+    },
+    {
+      "id": "uitp-overlapped",
+      "cat": "forms",
+      "kind": "live",
+      "status": "pass",
+      "ms": 405,
+      "error": null
+    },
+    {
+      "id": "uitp-hiddenlayers",
+      "cat": "modals",
+      "kind": "live",
+      "status": "pass",
+      "ms": 487,
+      "error": null
+    },
+    {
+      "id": "uitp-shadowdom",
+      "cat": "shadow-dom",
+      "kind": "live",
+      "status": "pass",
+      "ms": 458,
+      "error": null
+    },
+    {
+      "id": "uitp-progressbar",
+      "cat": "navigation",
+      "kind": "live",
+      "status": "pass",
+      "ms": 8073,
+      "error": null
+    },
+    {
+      "id": "uitp-nbsp",
+      "cat": "locators",
+      "kind": "live",
+      "status": "pass",
+      "ms": 905,
+      "error": null
+    },
+    {
+      "id": "uitp-mouseover",
+      "cat": "hover",
+      "kind": "live",
+      "status": "pass",
+      "ms": 1193,
+      "error": null
+    },
+    {
+      "id": "todomvc-react",
+      "cat": "spa",
+      "kind": "live",
+      "status": "pass",
+      "ms": 3250,
+      "error": null
+    },
+    {
+      "id": "todomvc-vue",
+      "cat": "spa",
+      "kind": "live",
+      "status": "pass",
+      "ms": 3412,
+      "error": null
+    },
+    {
+      "id": "todomvc-angular",
+      "cat": "spa",
+      "kind": "live",
+      "status": "pass",
+      "ms": 1964,
+      "error": null
+    },
+    {
+      "id": "pdf-live",
+      "cat": "pdf",
+      "kind": "live",
+      "status": "pass",
+      "ms": 1684,
+      "error": null
+    }
+  ]
+}

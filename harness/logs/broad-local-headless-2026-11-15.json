@@ -1,0 +1,308 @@
+{
+  "summary": {
+    "total": 37,
+    "pass": 35,
+    "fail": 2,
+    "blocked": 0,
+    "source": "headless",
+    "at": "2026-11-16T06:36:10.723Z"
+  },
+  "results": [
+    {
+      "id": "iframe-same",
+      "cat": "iframes",
+      "kind": "local",
+      "status": "pass",
+      "ms": 1183,
+      "error": null
+    },
+    {
+      "id": "iframe-cross-origin",
+      "cat": "iframes",
+      "kind": "local",
+      "status": "pass",
+      "ms": 143,
+      "error": null
+    },
+    {
+      "id": "contenteditable",
+      "cat": "editors",
+      "kind": "local",
+      "status": "pass",
+      "ms": 42,
+      "error": null
+    },
+    {
+      "id": "html5-drag",
+      "cat": "drag",
+      "kind": "local",
+      "status": "pass",
+      "ms": 32,
+      "error": null
+    },
+    {
+      "id": "mouse-drag-slider",
+      "cat": "drag",
+      "kind": "local",
+      "status": "pass",
+      "ms": 366,
+      "error": null
+    },
+    {
+      "id": "hover-menu",
+      "cat": "hover",
+      "kind": "local",
+      "status": "pass",
+      "ms": 194,
+      "error": null
+    },
+    {
+      "id": "date-native",
+      "cat": "datepicker",
+      "kind": "local",
+      "status": "pass",
+      "ms": 30,
+      "error": null
+    },
+    {
+      "id": "date-custom",
+      "cat": "datepicker",
+      "kind": "local",
+      "status": "pass",
+      "ms": 189,
+      "error": null
+    },
+    {
+      "id": "combobox",
+      "cat": "select",
+      "kind": "local",
+      "status": "pass",
+      "ms": 117,
+      "error": null
+    },
+    {
+      "id": "cookie-banner-modal",
+      "cat": "modals",
+      "kind": "local",
+      "status": "pass",
+      "ms": 246,
+      "error": null
+    },
+    {
+      "id": "covered-click-warns",
+      "cat": "modals",
+      "kind": "local",
+      "status": "pass",
+      "ms": 97,
+      "error": null
+    },
+    {
+      "id": "window-open-popup",
+      "cat": "tabs",
+      "kind": "local",
+      "status": "pass",
+      "ms": 172,
+      "error": null
+    },
+    {
+      "id": "target-blank-link",
+      "cat": "tabs",
+      "kind": "local",
+      "status": "pass",
+      "ms": 206,
+      "error": null
+    },
+    {
+      "id": "multi-tab-parallel",
+      "cat": "tabs",
+      "kind": "local",
+      "status": "pass",
+      "ms": 214,
+      "error": null
+    },
+    {
+      "id": "auth-form-local",
+      "cat": "auth",
+      "kind": "local",
+      "status": "pass",
+      "ms": 216,
+      "error": null
+    },
+    {
+      "id": "slow-form-submit-2.6s",
+      "cat": "navigation",
+      "kind": "local",
+      "status": "pass",
+      "ms": 2789,
+      "error": null
+    },
+    {
+      "id": "slow-link-3s",
+      "cat": "navigation",
+      "kind": "local",
+      "status": "pass",
+      "ms": 3148,
+      "error": null
+    },
+    {
+      "id": "slow-enter-submit",
+      "cat": "navigation",
+      "kind": "local",
+      "status": "pass",
+      "ms": 2666,
+      "error": null
+    },
+    {
+      "id": "lazy-element-1.8s",
+      "cat": "navigation",
+      "kind": "local",
+      "status": "pass",
+      "ms": 1894,
+      "error": null
+    },
+    {
+      "id": "canvas-xy-click",
+      "cat": "canvas",
+      "kind": "local",
+      "status": "pass",
+      "ms": 120,
+      "error": null
+    },
+    {
+      "id": "canvas-wheel",
+      "cat": "canvas",
+      "kind": "local",
+      "status": "pass",
+      "ms": 140,
+      "error": null
+    },
+    {
+      "id": "video-play-pause",
+      "cat": "video",
+      "kind": "local",
+      "status": "fail",
+      "ms": 800,
+      "error": "assert: {\"currentTime\":0.1,\"duration\":2,\"paused\":true,\"muted\":true,\"ended\":false,\"src\":\"http://127.0.0.1:49523/tone.wav\"}"
+    },
+    {
+      "id": "keyboard-shortcuts",
+      "cat": "keyboard",
+      "kind": "local",
+      "status": "pass",
+      "ms": 42,
+      "error": null
+    },
+    {
+      "id": "long-table-extract",
+      "cat": "tables",
+      "kind": "local",
+      "status": "pass",
+      "ms": 102,
+      "error": null
+    },
+    {
+      "id": "long-page-scroll-end",
+      "cat": "tables",
+      "kind": "local",
+      "status": "fail",
+      "ms": 128,
+      "error": "assert: viewport snapshot should show the footer"
+    },
+    {
+      "id": "infinite-scroll",
+      "cat": "scroll",
+      "kind": "local",
+      "status": "pass",
+      "ms": 383,
+      "error": null
+    },
+    {
+      "id": "form-validation",
+      "cat": "forms",
+      "kind": "local",
+      "status": "pass",
+      "ms": 1842,
+      "error": null
+    },
+    {
+      "id": "file-download",
+      "cat": "files",
+      "kind": "local",
+      "status": "pass",
+      "ms": 331,
+      "error": null
+    },
+    {
+      "id": "file-upload",
+      "cat": "files",
+      "kind": "local",
+      "status": "pass",
+      "ms": 34,
+      "error": null
+    },
+    {
+      "id": "pdf-open",
+      "cat": "pdf",
+      "kind": "local",
+      "status": "pass",
+      "ms": 44,
+      "error": null
+    },
+    {
+      "id": "geolocation-permission",
+      "cat": "permissions",
+      "kind": "local",
+      "status": "pass",
+      "ms": 176,
+      "error": null
+    },
+    {
+      "id": "spa-pushstate-nav",
+      "cat": "spa",
+      "kind": "local",
+      "status": "pass",
+      "ms": 291,
+      "error": null
+    },
+    {
+      "id": "back-forward",
+      "cat": "history",
+      "kind": "local",
+      "status": "pass",
+      "ms": 101,
+      "error": null
+    },
+    {
+      "id": "spa-back-forward",
+      "cat": "history",
+      "kind": "local",
+      "status": "pass",
+      "ms": 306,
+      "error": null
+    },
+    {
+      "id": "js-dialogs",
+      "cat": "dialogs",
+      "kind": "local",
+      "status": "pass",
+      "ms": 202,
+      "error": null
+    },
+    {
+      "id": "nested-shadow",
+      "cat": "shadow-dom",
+      "kind": "local",
+      "status": "pass",
+      "ms": 129,
+      "error": null
+    },
+    {
+      "id": "right-click",
+      "cat": "mouse",
+      "kind": "local",
+      "status": "pass",
+      "ms": 131,
+      "error": null
+    }
+  ]
+}

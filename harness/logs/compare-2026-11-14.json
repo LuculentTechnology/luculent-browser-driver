@@ -1,0 +1,150 @@
+{
+  "measuredAt": "2026-11-15T04:59:15.342Z",
+  "machine": "AMD Ryzen 5 5500, 32 GB, win32",
+  "iters": 7,
+  "extensionColdConnectMs": 1781.2,
+  "transports": [
+    {
+      "transport": "Luculent MCP stdio (extension existing-tab)",
+      "coldStartupMs": 144.8,
+      "form": {
+        "batchedP50Ms": 183.9,
+        "batchedP95Ms": 185.7,
+        "batchedReqs": 1,
+        "batchedBytes": 1311,
+        "perActionP50Ms": 246.8,
+        "perActionP95Ms": 259.3,
+        "perActionReqs": 7,
+        "perActionBytes": 4063
+      },
+      "search": {
+        "batchedP50Ms": 179.9,
+        "batchedP95Ms": 181.5,
+        "batchedReqs": 1,
+        "batchedBytes": 764,
+        "perActionP50Ms": 186.3,
+        "perActionP95Ms": 191.2,
+        "perActionReqs": 4,
+        "perActionBytes": 2312
+      }
+    },
+    {
+      "transport": "Luculent MCP stdio (headless)",
+      "coldStartupMs": 451.6,
+      "form": {
+        "batchedP50Ms": 132.4,
+        "batchedP95Ms": 140.6,
+        "batchedReqs": 1,
+        "batchedBytes": 1297,
+        "perActionP50Ms": 166.6,
+        "perActionP95Ms": 170.1,
+        "perActionReqs": 7,
+        "perActionBytes": 3953
+      },
+      "search": {
+        "batchedP50Ms": 152,
+        "batchedP95Ms": 154.1,
+        "batchedReqs": 1,
+        "batchedBytes": 756,
+        "perActionP50Ms": 159.6,
+        "perActionP95Ms": 172.7,
+        "perActionReqs": 4,
+        "perActionBytes": 2250
+      }
+    },
+    {
+      "transport": "Luculent MCP HTTP (extension existing-tab)",
+      "coldStartupMs": 25,
+      "form": {
+        "batchedP50Ms": 187.5,
+        "batchedP95Ms": 234.9,
+        "batchedReqs": 1,
+        "batchedBytes": 1309,
+        "perActionP50Ms": 293.3,
+        "perActionP95Ms": 313.6,
+        "perActionReqs": 7,
+        "perActionBytes": 4042
+      },
+      "search": {
+        "batchedP50Ms": 182.4,
+        "batchedP95Ms": 183.1,
+        "batchedReqs": 1,
+        "batchedBytes": 761,
+        "perActionP50Ms": 206.2,
+        "perActionP95Ms": 209.3,
+        "perActionReqs": 4,
+        "perActionBytes": 2300
+      }
+    },
+    {
+      "transport": "Luculent Direct HTTP /v1/rpc (extension existing-tab)",
+      "coldStartupMs": 2.8,
+      "form": {
+        "batchedP50Ms": 233.6,
+        "batchedP95Ms": 251.6,
+        "batchedReqs": 1,
+        "batchedBytes": 1363,
+        "perActionP50Ms": 337,
+        "perActionP95Ms": 369.8,
+        "perActionReqs": 7,
+        "perActionBytes": 4826
+      },
+      "search": {
+        "batchedP50Ms": 191.7,
+        "batchedP95Ms": 201.5,
+        "batchedReqs": 1,
+        "batchedBytes": 767,
+        "perActionP50Ms": 229.3,
+        "perActionP95Ms": 235.3,
+        "perActionReqs": 4,
+        "perActionBytes": 2819
+      }
+    },
+    {
+      "transport": "Luculent WebSocket /v1/ws (extension existing-tab)",
+      "coldStartupMs": 2.8,
+      "form": {
+        "batchedP50Ms": 208.7,
+        "batchedP95Ms": 222.9,
+        "batchedReqs": 1,
+        "batchedBytes": 1379,
+        "perActionP50Ms": 296.5,
+        "perActionP95Ms": 329.3,
+        "perActionReqs": 7,
+        "perActionBytes": 4939
+      },
+      "search": {
+        "batchedP50Ms": 189,
+        "batchedP95Ms": 195.3,
+        "batchedReqs": 1,
+        "batchedBytes": 783,
+        "perActionP50Ms": 213.3,
+        "perActionP95Ms": 216.6,
+        "perActionReqs": 4,
+        "perActionBytes": 2883
+      }
+    }
+  ],
+  "playwrightMcp": {
+    "transport": "Playwright MCP 0.0.85 (stdio, headless)",
+    "coldStartupMs": 801.5,
+    "form": {
+      "perActionP50Ms": 1766.2,
+      "perActionP95Ms": 1782.4,
+      "reqs": 7,
+      "bytes": 5103
+    },
+    "search": {
+      "perActionP50Ms": 1122,
+      "perActionP95Ms": 1133.6,
+      "reqs": 4,
+      "bytes": 3040
+    }
+  },
+  "opencodeBrowse": {
+    "status": "Not installed / unsupported on Windows benchmark host; ratio left blank until matched"
+  },
+  "kimiBrowserExtension": {
+    "status": "Not installed / incompatible (no MCP/CLI programmable driver interface); ratio left blank"
+  }
+}
