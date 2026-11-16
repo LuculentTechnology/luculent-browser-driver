@@ -1,29 +1,47 @@
-# Benchmark stat sheet - Luculent Browser Driver for AI Agents vs Playwright MCP
+# Benchmark stat sheet - Luculent Browser Driver for AI Agents vs Playwright MCP and OpenCode Browse
 
-All numbers are real measurements from `npm run bench -- --iters 7` (`bench/bench.mjs`), saved to `bench/results.json`.
-Run: Nov 15, 2026, 9:52 PM PT, on a desktop PC (AMD Ryzen 5 5500, 32 GB, Windows 11, Node 24.19), at normal
-priority with other jobs running (about 50% CPU load). Median of 7 runs after 1 warm-up. **Default security settings
-on** (password guard, banking preset, JavaScript/cookies off, uploads ask first), except the per-key rate limit, raised
-so the per-action flow can fire 7 calls in under 0.2 s.
+All numbers are real measurements. Luculent and Playwright MCP: `npm run bench -- --iters 7` (`bench/bench.mjs`), saved
+to `bench/results.json`, run Nov 15, 2026, 9:52 PM PT. OpenCode Browse: `node bench/browse-bench.mjs --iters 7 --window
+separate`, saved to `bench/results-browse.json`, run Nov 15, 2026, 11:57 PM PT. Same desktop PC (AMD Ryzen 5 5500,
+32 GB, Windows 11, Node 24.19), same fixture pages (`test/fixtures.mjs`), same MCP stdio client. Median of 7 runs after
+1 warm-up. Luculent ran with **default security settings on** (password guard, banking preset, JavaScript/cookies off,
+uploads ask first), except the per-key rate limit, raised so the per-action flow can fire 7 calls in under 0.2 s.
 
 ## Headline numbers
-Both drivers drive headless Chrome over MCP stdio on the same local pages.
+Luculent and Playwright MCP drive headless Chrome. OpenCode Browse (`@opencode/browse` 0.0.17 with its 0.0.17 extension
+from the Chrome Web Store) can only drive a browser through its extension, so it ran in Playwright's Chromium with the
+extension loaded and paired to its local relay, at its fastest settings: agent tabs in their own window and human-like
+input off. Each competitor cell shows how it compares with Luculent.
 
-| Test | Luculent Browser Driver | Playwright MCP 0.0.85 | Difference |
+| Test | Luculent Browser Driver | Playwright MCP 0.0.85 | OpenCode Browse 0.0.17 |
 |---|---|---|---|
-| 7-action sign-up form (Luculent: all steps in one call) | **131 ms** | 1,748 ms | **13x faster** |
-| Same form, one call per action | **165 ms** | 1,748 ms | **10x faster** |
-| 4-action search (Luculent: all steps in one call) | **163 ms** | 1,115 ms | **6.8x faster** |
-| Same search, one call per action | **168 ms** | 1,115 ms | **6.6x faster** |
-| Time per tool call, form (median) | **5.9 ms** | 45.3 ms | **7.6x faster** |
-| Time per tool call, search (median) | **25.9 ms** | 505.6 ms | **19x faster** |
-| Tool calls to finish the form | **1** | 7 | **6 fewer** |
-| Data the agent reads, form | **0.8 KB** | 4.0 KB | **5x less** |
-| Data the agent reads, search | **0.4 KB** | 2.4 KB | **6x less** |
-| Cold start, new MCP server to first page loaded | **522 ms** | 774 ms | **1.4x faster** |
+| 7-action sign-up form (all steps in one call where the tool can) | **131 ms** | 1,748 ms (13x slower) | 411 ms (3.1x slower) |
+| Same form, one call per action | **165 ms** | 1,748 ms (11x slower) | 591 ms (3.6x slower) |
+| 4-action search (all steps in one call where the tool can) | **163 ms** | 1,115 ms (6.8x slower) | 323 ms (2x slower) |
+| Same search, one call per action | **168 ms** | 1,115 ms (6.7x slower) | 418 ms (2.5x slower) |
+| Time per tool call, form (median) | **5.9 ms** | 45.3 ms (7.6x slower) | 81.6 ms (14x slower) |
+| Time per tool call, search (median) | **25.9 ms** | 505.6 ms (20x slower) | 104 ms (4x slower) |
+| Tool calls to finish the form | **1** | 7 (7x more calls) | **1 (same)** |
+| Data the agent reads, form | 0.8 KB | 4.0 KB (5.2x more data) | **0.7 KB (1.1x less data)** |
+| Data the agent reads, search | **0.4 KB** | 2.4 KB (6x more data) | 0.4 KB (1.1x more data) |
+| Cold start, new MCP server to first page loaded | 522 ms | 774 ms (1.5x slower) | **353 ms (1.5x faster)** |
 
-Store-safe claims (rounded down): "Up to 13x faster than Playwright MCP on the same form", "5x less data for the model
-to read".
+Playwright MCP has no batching, so its "all steps in one call" rows are its per-action time. OpenCode Browse batches
+through its `execute` tool (one Playwright script per call), so its batched rows are one call. OpenCode Browse can't
+launch a browser of its own: its cold start opens a tab in a browser that is already running, while Luculent's and
+Playwright's include launching headless Chrome.
+
+OpenCode Browse at its **default** settings (agent tabs in the background of your window, human-like input on;
+`bench/results-browse-defaults.json`): form 5,428 ms in one call and 6,494 ms one call per action, search 328 ms and
+450 ms, 116.8 ms per call (form), cold start 564 ms. Chrome throttles background tabs and Playwright waits for each element
+to be stable before clicking, so each click or check took about 2 s.
+
+How the extension was paired: the relay only accepts the Chrome Web Store extension id, so the bench unpacks the store
+CRX, sets the manifest `key` from the CRX public key (same id, `mfnicocicmmlkpjnaffgihfjhdgjkdjg`), loads it into a fresh
+profile, runs `browse pair` and enters the code on the extension's settings page. The pairing log is saved in the JSON.
+
+Store-safe claims (rounded down): "Up to 13x faster than Playwright MCP on the same form", "3x faster than OpenCode
+Browse on the same form", "5x less data for the model to read than Playwright MCP".
 
 ## Full results
 | Driver | Form batched | Form per-action | Median ms/call (form / search) | Form bytes (batched / per-action) | Search batched | Search per-action | Search bytes (batched / per-action) | Cold start |
@@ -31,6 +49,8 @@ to read".
 | LBD headless (MCP stdio) | 131 ms | 165 ms | 5.9 / 25.9 | 0.8 KB / 2.6 KB | 163 ms | 168 ms | 0.4 KB / 1.5 KB | 522 ms |
 | LBD extension, your own Chrome tab (MCP stdio) | 177 ms | 237 ms | 14.4 / 35.6 | 0.8 KB / 2.6 KB | 178 ms | 193 ms | 0.4 KB / 1.5 KB | - |
 | Playwright MCP headless (MCP stdio) | - (no batching) | 1,748 ms | 45.3 / 505.6 | - / 4.0 KB | - | 1,115 ms | - / 2.4 KB | 774 ms |
+| OpenCode Browse 0.0.17, own window, human-like input off (MCP stdio) | 411 ms | 591 ms | 81.6 / 104.0 | 0.7 KB / 2.3 KB | 323 ms | 418 ms | 0.4 KB / 1.1 KB | 353 ms |
+| OpenCode Browse 0.0.17, defaults (MCP stdio) | 5,428 ms | 6,494 ms | 116.8 / 108.4 | 0.7 KB / 2.3 KB | 328 ms | 450 ms | 0.4 KB / 1.1 KB | 564 ms |
 
 Playwright MCP has no extension mode in this harness, so the own-tab row has no Playwright comparison.
 
@@ -49,7 +69,7 @@ Same fixture pages; Luculent over each transport and Playwright MCP. Run log: [`
 | LBD extension, real tab (Direct HTTP `/v1/rpc`) | 3 ms | **234 ms** / 252 ms | 337 ms / 370 ms | 1 / 7 | 1.3 KB / 4.7 KB | **192 ms** / 202 ms | 229 ms / 235 ms | 1 / 4 | 0.7 KB / 2.8 KB | 1.27x / 1.07x |
 | LBD extension, real tab (WebSocket `/v1/ws`) | 3 ms | **209 ms** / 223 ms | 297 ms / 329 ms | 1 / 7 | 1.3 KB / 4.8 KB | **189 ms** / 195 ms | 213 ms / 217 ms | 1 / 4 | 0.8 KB / 2.8 KB | 1.13x / 1.05x |
 | Playwright MCP 0.0.85 headless (MCP stdio) | 802 ms | Unsupported | **1,766 ms** / 1,782 ms | 7 | 5.0 KB | Unsupported | **1,122 ms** / 1,134 ms | 4 | 3.0 KB | **13.3x slower** (`form`), **7.4x slower** (`search`) |
-| OpenCode Browse | - | Not installed on benchmark host | - | - | - | Not installed on benchmark host | - | - | - | *(blank until matched)* |
+| OpenCode Browse | - | Not installed on Nov 14 (measured Nov 15, see Headline numbers) | - | - | - | - | - | - | - | - |
 | Kimi Browser Extension | - | Incompatible (no MCP/HTTP driver API) | - | - | - | Incompatible (no MCP/HTTP driver API) | - | - | - | *(blank — incompatible)* |
 
 ## Method

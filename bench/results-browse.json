@@ -1,0 +1,80 @@
+{
+  "tool": "OpenCode Browse (@opencode/browse)",
+  "version": "0.0.17",
+  "settings": "human-like input off, agent tabs in their own window (separate)",
+  "extension": "Chrome Web Store build, loaded in Playwright Chromium (new headless)",
+  "iters": 7,
+  "machine": "AMD Ryzen 5 5500, 32 GB, win32",
+  "date": "2026-11-16T07:57:06.196Z",
+  "pairLog": "Pairing code: VN35-5CSK\nOpen the Extensions menu → browse → Options, expand advanced (or click Pair with a code), enter VN35-5CSK as the pairing code, then click Connect. It works once, within 10 minutes.\nWaiting up to 120s for that browser. Later, `browse pair --list` shows paired browsers.\n✓ Paired Chromium on DESKTOP-TK7BM1Q.",
+  "tools": [
+    "execute",
+    "status",
+    "session_new",
+    "session_allowlist",
+    "session_list",
+    "session_use",
+    "session_reset",
+    "session_delete",
+    "session_adopt",
+    "network",
+    "recording",
+    "tabs_cleanup",
+    "settings"
+  ],
+  "browse": {
+    "form": {
+      "batchedMs": 411.4390999999996,
+      "perActionMs": 591.277,
+      "msPerCall": 81.6219000000001,
+      "actions": 7,
+      "bytesBatched": 691,
+      "bytesPerAction": 2361,
+      "batchedSamples": [
+        429.1269999999995,
+        380.8863000000001,
+        428.332699999999,
+        468.9993000000013,
+        411.4390999999996,
+        382.65580000000045,
+        381.5186999999987
+      ],
+      "perActionSamples": [
+        680.0250999999989,
+        524.2916999999998,
+        591.277,
+        639.2982000000011,
+        638.511599999998,
+        568.1728000000021,
+        556.5959000000003
+      ]
+    },
+    "search": {
+      "batchedMs": 323.21860000000015,
+      "perActionMs": 417.58660000000054,
+      "msPerCall": 103.95579999999973,
+      "actions": 4,
+      "bytesBatched": 434,
+      "bytesPerAction": 1084,
+      "batchedSamples": [
+        330.7562999999991,
+        317.6072000000004,
+        304.312899999999,
+        333.6810000000005,
+        347.7582000000002,
+        323.21860000000015,
+        286.1241000000009
+      ],
+      "perActionSamples": [
+        417.58660000000054,
+        442.9362000000001,
+        429.85849999999846,
+        438.34089999999924,
+        381.01070000000254,
+        375.0556000000033,
+        346.122199999998
+      ]
+    }
+  },
+  "coldStartMs": 352.642399999997
+}
