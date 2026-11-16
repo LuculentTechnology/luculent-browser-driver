@@ -1,0 +1,1068 @@
+TAP version 13
+# Subtest: packSettings drops chats and keys and maps blocklists
+ok 1 - packSettings drops chats and keys and maps blocklists
+  ---
+  duration_ms: 2.7945
+  type: 'test'
+  ...
+# Subtest: applyPacked writes security, lists and metadata opt-out back to local shape
+ok 2 - applyPacked writes security, lists and metadata opt-out back to local shape
+  ---
+  duration_ms: 0.3139
+  type: 'test'
+  ...
+# Subtest: handoff messages must be the scoped type and a hex code
+ok 3 - handoff messages must be the scoped type and a hex code
+  ---
+  duration_ms: 0.2252
+  type: 'test'
+  ...
+# Subtest: sign-in URL stays on luculent.dev and includes the extension id
+ok 4 - sign-in URL stays on luculent.dev and includes the extension id
+  ---
+  duration_ms: 0.3046
+  type: 'test'
+  ...
+# Subtest: regional default consent is not packed or forced onto another device
+ok 5 - regional default consent is not packed or forced onto another device
+  ---
+  duration_ms: 0.2584
+  type: 'test'
+  ...
+# Subtest: banner copy is the same in the extension and src, and appears in the FAQ, listing and options
+not ok 6 - banner copy is the same in the extension and src, and appears in the FAQ, listing and options
+  ---
+  duration_ms: 1.8517
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\banner-copy.test.mjs:13:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\extension\\options.html'"
+  code: 'ENOENT'
+  stack: |-
+    readFileSync (node:fs:484:20)
+    TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/banner-copy.test.mjs:22:15)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.start (node:internal/test_runner/test:1242:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: redactSecrets strips password values and API tokens, leaves ordinary text
+ok 7 - redactSecrets strips password values and API tokens, leaves ordinary text
+  ---
+  duration_ms: 1.1568
+  type: 'test'
+  ...
+# Subtest: messages never store password values
+ok 8 - messages never store password values
+  ---
+  duration_ms: 0.7314
+  type: 'test'
+  ...
+# Subtest: closing a tab moves an unsaved chat to Closed with closedAt
+ok 9 - closing a tab moves an unsaved chat to Closed with closedAt
+  ---
+  duration_ms: 0.4259
+  type: 'test'
+  ...
+# Subtest: closing a tab group or ending a session also moves the chat to Closed
+ok 10 - closing a tab group or ending a session also moves the chat to Closed
+  ---
+  duration_ms: 0.3161
+  type: 'test'
+  ...
+# Subtest: Save from Active or Closed keeps the chat until manual delete; tab close does not unsaved it
+ok 11 - Save from Active or Closed keeps the chat until manual delete; tab close does not unsaved it
+  ---
+  duration_ms: 1.0467
+  type: 'test'
+  ...
+# Subtest: Closed chats auto-delete after 30 days; Saved and Active are kept (time-mocked)
+ok 12 - Closed chats auto-delete after 30 days; Saved and Active are kept (time-mocked)
+  ---
+  duration_ms: 11.091
+  type: 'test'
+  ...
+# Subtest: BD20 persistence: grants restore, auto-reattach, attach-refused fallback, sticky origins
+ok 13 - BD20 persistence: grants restore, auto-reattach, attach-refused fallback, sticky origins
+  ---
+  duration_ms: 1.4133
+  type: 'test'
+  ...
+# Subtest: BD24 named tab groups and multi-profile hello fields
+ok 14 - BD24 named tab groups and multi-profile hello fields
+  ---
+  duration_ms: 0.3115
+  type: 'test'
+  ...
+# Subtest: BD25 no focus steal by default and no always-on all-tab content scripts
+ok 15 - BD25 no focus steal by default and no always-on all-tab content scripts
+  ---
+  duration_ms: 0.251
+  type: 'test'
+  ...
+# Subtest: side panel, page context, and chat-purge wiring exist in the extension
+ok 16 - side panel, page context, and chat-purge wiring exist in the extension
+  ---
+  duration_ms: 0.2304
+  type: 'test'
+  ...
+# Subtest: click mode normalizes, defaults to Cowork and maps the legacy disableWindow flag
+ok 17 - click mode normalizes, defaults to Cowork and maps the legacy disableWindow flag
+  ---
+  duration_ms: 1.6512
+  type: 'test'
+  ...
+# Subtest: the AI's own CDP input is never counted as yours
+ok 18 - the AI's own CDP input is never counted as yours
+  ---
+  duration_ms: 0.3491
+  type: 'test'
+  ...
+# Subtest: Cowork holds while you interact, waits for idle, then reports that you stepped in
+ok 19 - Cowork holds while you interact, waits for idle, then reports that you stepped in
+  ---
+  duration_ms: 0.4652
+  type: 'test'
+  ...
+# Subtest: Pause stops the task on your input and continues only after Resume
+ok 20 - Pause stops the task on your input and continues only after Resume
+  ---
+  duration_ms: 121.5849
+  type: 'test'
+  ...
+# Subtest: Disable window mode blocks instead of tracking, and switching away from Pause releases a waiting task
+ok 21 - Disable window mode blocks instead of tracking, and switching away from Pause releases a waiting task
+  ---
+  duration_ms: 61.9886
+  type: 'test'
+  ...
+# Subtest: a stopped task (Take back control / killswitch) leaves the gate at once
+ok 22 - a stopped task (Take back control / killswitch) leaves the gate at once
+  ---
+  duration_ms: 0.3797
+  type: 'test'
+  ...
+# Subtest: relay: input from the watched tab drives the gate; other tabs and AI input are ignored
+ok 23 - relay: input from the watched tab drives the gate; other tabs and AI input are ignored
+  ---
+  duration_ms: 172.3323
+  type: 'test'
+  ...
+# Subtest: relay + MCP expose the click mode (read, set) and settings sync carries it
+ok 24 - relay + MCP expose the click mode (read, set) and settings sync carries it
+  ---
+  duration_ms: 5.1993
+  type: 'test'
+  ...
+# Subtest: planner: after you step in, steps whose outcome is already on the page are marked done by you
+ok 25 - planner: after you step in, steps whose outcome is already on the page are marked done by you
+  ---
+  duration_ms: 2.0955
+  type: 'test'
+  ...
+# Subtest: extension wiring: overlay reports trusted input only, shows a quiet indicator, sw forwards it
+ok 26 - extension wiring: overlay reports trusted input only, shows a quiet indicator, sw forwards it
+  ---
+  duration_ms: 0.725
+  type: 'test'
+  ...
+# Subtest: side panel calls keep their reply id: the chat id travels as chatId, so Paused/Resume reaches the panel
+ok 27 - side panel calls keep their reply id: the chat id travels as chatId, so Paused/Resume reaches the panel
+  ---
+  duration_ms: 0.6719
+  type: 'test'
+  ...
+# Subtest: the page you were on when you stepped in travels with the record; a mode set by an agent is not saved
+ok 28 - the page you were on when you stepped in travels with the record; a mode set by an agent is not saved
+  ---
+  duration_ms: 0.4745
+  type: 'test'
+  ...
+# Subtest: batch: form fill + submit + extract in one call
+ok 29 - batch: form fill + submit + extract in one call
+  ---
+  duration_ms: 1602.8519
+  type: 'test'
+  ...
+# Subtest: search with Enter, wait for async results, extract all
+ok 30 - search with Enter, wait for async results, extract all
+  ---
+  duration_ms: 157.8342
+  type: 'test'
+  ...
+# Subtest: waitNav on a click that does not navigate returns quickly; [e12] refs and wait aliases work
+ok 31 - waitNav on a click that does not navigate returns quickly; [e12] refs and wait aliases work
+  ---
+  duration_ms: 1963.6585
+  type: 'test'
+  ...
+# Subtest: stale ref after navigation fails fast with a hint
+ok 32 - stale ref after navigation fails fast with a hint
+  ---
+  duration_ms: 80.7735
+  type: 'test'
+  ...
+# Subtest: snapshot refs are stable and diffs only show changes
+ok 33 - snapshot refs are stable and diffs only show changes
+  ---
+  duration_ms: 431.645
+  type: 'test'
+  ...
+# Subtest: shadow DOM targets
+ok 34 - shadow DOM targets
+  ---
+  duration_ms: 108.1467
+  type: 'test'
+  ...
+# Subtest: errors are per step and stop the batch
+ok 35 - errors are per step and stop the batch
+  ---
+  duration_ms: 656.1536
+  type: 'test'
+  ...
+# Subtest: parallel jobs on new headless tabs
+ok 36 - parallel jobs on new headless tabs
+  ---
+  duration_ms: 126.8429
+  type: 'test'
+  ...
+# Subtest: screenshot only on request
+ok 37 - screenshot only on request
+  ---
+  duration_ms: 70.373
+  type: 'test'
+  ...
+# Subtest: HTTP RPC + scopes: read-only key cannot act
+ok 38 - HTTP RPC + scopes: read-only key cannot act
+  ---
+  duration_ms: 42.3553
+  type: 'test'
+  ...
+# Subtest: web page origins are refused
+ok 39 - web page origins are refused
+  ---
+  duration_ms: 2.4986
+  type: 'test'
+  ...
+# Subtest: origin allowlist on a key
+ok 40 - origin allowlist on a key
+  ---
+  duration_ms: 13.7026
+  type: 'test'
+  ...
+# Subtest: MCP over HTTP: tools/list and browser_run
+ok 41 - MCP over HTTP: tools/list and browser_run
+  ---
+  duration_ms: 59.9608
+  type: 'test'
+  ...
+# Subtest: revoked key is rejected immediately
+ok 42 - revoked key is rejected immediately
+  ---
+  duration_ms: 38.3644
+  type: 'test'
+  ...
+# Subtest: killswitch drops agents and refuses calls until resume
+ok 43 - killswitch drops agents and refuses calls until resume
+  ---
+  duration_ms: 1434.1816
+  type: 'test'
+  ...
+# Subtest: guard denials abort the batch and are not reported as optional success
+ok 44 - guard denials abort the batch and are not reported as optional success
+  ---
+  duration_ms: 2.0785
+  type: 'test'
+  ...
+# Subtest: pairing: the extension pins the relay identity on first connect
+not ok 45 - pairing: the extension pins the relay identity on first connect
+  ---
+  duration_ms: 11731.2066
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\extension-security.test.mjs:66:1'
+  failureType: 'hookFailed'
+  error: 'timed out waiting for options page'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitFor (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:27:9)
+    async TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:60:3)
+    async TestHook.run (node:internal/test_runner/test:1389:7)
+  ...
+# Subtest: ungranted tabs are invisible and off limits; agent-opened tabs work and show the AI badge
+not ok 46 - ungranted tabs are invisible and off limits; agent-opened tabs work and show the AI badge
+  ---
+  duration_ms: 0.9751
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\extension-security.test.mjs:73:1'
+  failureType: 'hookFailed'
+  error: 'timed out waiting for options page'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitFor (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:27:9)
+    async TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:60:3)
+    async TestHook.run (node:internal/test_runner/test:1389:7)
+  ...
+# Subtest: per-tab grant from the popup, and revoke
+not ok 47 - per-tab grant from the popup, and revoke
+  ---
+  duration_ms: 0.1934
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\extension-security.test.mjs:87:1'
+  failureType: 'hookFailed'
+  error: 'timed out waiting for options page'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitFor (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:27:9)
+    async TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:60:3)
+    async TestHook.run (node:internal/test_runner/test:1389:7)
+  ...
+# Subtest: popups opened by a granted tab are granted too
+not ok 48 - popups opened by a granted tab are granted too
+  ---
+  duration_ms: 0.0697
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\extension-security.test.mjs:96:1'
+  failureType: 'hookFailed'
+  error: 'timed out waiting for options page'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitFor (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:27:9)
+    async TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:60:3)
+    async TestHook.run (node:internal/test_runner/test:1389:7)
+  ...
+# Subtest: background agent tabs respond instantly (hover menus, clicks, wheel)
+not ok 49 - background agent tabs respond instantly (hover menus, clicks, wheel)
+  ---
+  duration_ms: 0.0835
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\extension-security.test.mjs:106:1'
+  failureType: 'hookFailed'
+  error: 'timed out waiting for options page'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitFor (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:27:9)
+    async TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:60:3)
+    async TestHook.run (node:internal/test_runner/test:1389:7)
+  ...
+# Subtest: extension blocks dangerous CDP even from a rogue relay
+not ok 50 - extension blocks dangerous CDP even from a rogue relay
+  ---
+  duration_ms: 0.0584
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\extension-security.test.mjs:116:1'
+  failureType: 'hookFailed'
+  error: 'timed out waiting for options page'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitFor (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:27:9)
+    async TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:60:3)
+    async TestHook.run (node:internal/test_runner/test:1389:7)
+  ...
+# Subtest: upload needs approval from the extension (notification or popup); declining blocks it
+not ok 51 - upload needs approval from the extension (notification or popup); declining blocks it
+  ---
+  duration_ms: 0.054
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\extension-security.test.mjs:139:1'
+  failureType: 'hookFailed'
+  error: 'timed out waiting for options page'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitFor (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:27:9)
+    async TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:60:3)
+    async TestHook.run (node:internal/test_runner/test:1389:7)
+  ...
+# Subtest: password fields: redacted and not typeable with default settings, even if the relay policy allows
+not ok 52 - password fields: redacted and not typeable with default settings, even if the relay policy allows
+  ---
+  duration_ms: 0.0713
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\extension-security.test.mjs:155:1'
+  failureType: 'hookFailed'
+  error: 'timed out waiting for options page'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitFor (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:27:9)
+    async TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:60:3)
+    async TestHook.run (node:internal/test_runner/test:1389:7)
+  ...
+# Subtest: eval is off by default in the extension; "ask me" approval through the popup
+not ok 53 - eval is off by default in the extension; "ask me" approval through the popup
+  ---
+  duration_ms: 0.0932
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\extension-security.test.mjs:166:1'
+  failureType: 'hookFailed'
+  error: 'timed out waiting for options page'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitFor (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:27:9)
+    async TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:60:3)
+    async TestHook.run (node:internal/test_runner/test:1389:7)
+  ...
+# Subtest: audit log in the popup shows agent actions and denials
+not ok 54 - audit log in the popup shows agent actions and denials
+  ---
+  duration_ms: 0.0981
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\extension-security.test.mjs:181:1'
+  failureType: 'hookFailed'
+  error: 'timed out waiting for options page'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitFor (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:27:9)
+    async TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:60:3)
+    async TestHook.run (node:internal/test_runner/test:1389:7)
+  ...
+# Subtest: killswitch in the popup stops agents until you resume
+not ok 55 - killswitch in the popup stops agents until you resume
+  ---
+  duration_ms: 0.0432
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\extension-security.test.mjs:188:1'
+  failureType: 'hookFailed'
+  error: 'timed out waiting for options page'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitFor (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:27:9)
+    async TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:60:3)
+    async TestHook.run (node:internal/test_runner/test:1389:7)
+  ...
+# Subtest: an impostor relay on the same port is refused; the real relay works again
+not ok 56 - an impostor relay on the same port is refused; the real relay works again
+  ---
+  duration_ms: 0.0487
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\extension-security.test.mjs:201:1'
+  failureType: 'hookFailed'
+  error: 'timed out waiting for options page'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitFor (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:27:9)
+    async TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/extension-security.test.mjs:60:3)
+    async TestHook.run (node:internal/test_runner/test:1389:7)
+  ...
+# Subtest: attaches to an existing tab by id without opening any tab
+ok 57 - attaches to an existing tab by id without opening any tab
+  ---
+  duration_ms: 1697.3838
+  type: 'test'
+  ...
+# Subtest: form flow through chrome.debugger
+ok 58 - form flow through chrome.debugger
+  ---
+  duration_ms: 420.9773
+  type: 'test'
+  ...
+# Subtest: multi-tab parallel in the real browser
+ok 59 - multi-tab parallel in the real browser
+  ---
+  duration_ms: 232.9764
+  type: 'test'
+  ...
+# \# extension reconnected in 239ms
+# Subtest: relay restart: extension reconnects silently, no new tabs, same tab still drivable
+ok 60 - relay restart: extension reconnects silently, no new tabs, same tab still drivable
+  ---
+  duration_ms: 362.9719
+  type: 'test'
+  ...
+# Subtest: killswitch detaches every tab
+ok 61 - killswitch detaches every tab
+  ---
+  duration_ms: 377.9158
+  type: 'test'
+  ...
+# Subtest: recorded steps redact secrets and password fields
+ok 62 - recorded steps redact secrets and password fields
+  ---
+  duration_ms: 1.2217
+  type: 'test'
+  ...
+# Subtest: record and replay a flow with no model calls; failure returns needsModel
+ok 63 - record and replay a flow with no model calls; failure returns needsModel
+  ---
+  duration_ms: 3.4513
+  type: 'test'
+  ...
+# Subtest: fuzzy text similarity and hint parsing
+ok 64 - fuzzy text similarity and hint parsing
+  ---
+  duration_ms: 494.6247
+  type: 'test'
+  ...
+# Subtest: intent and hints resolve to a confident target in code; ambiguity is not forced
+ok 65 - intent and hints resolve to a confident target in code; ambiguity is not forced
+  ---
+  duration_ms: 4.1903
+  type: 'test'
+  ...
+# Subtest: cookie banners are found as blockers code can clear
+ok 66 - cookie banners are found as blockers code can clear
+  ---
+  duration_ms: 1.1674
+  type: 'test'
+  ...
+# Subtest: familiarity: known from priors or cached locators, seen from this session, else new
+ok 67 - familiarity: known from priors or cached locators, seen from this session, else new
+  ---
+  duration_ms: 1.1331
+  type: 'test'
+  ...
+# Subtest: steps on a never-seen site stay at intent level: selectors, refs and positions are dropped
+ok 68 - steps on a never-seen site stay at intent level: selectors, refs and positions are dropped
+  ---
+  duration_ms: 1.1014
+  type: 'test'
+  ...
+# Subtest: resolution share counts code vs model
+ok 69 - resolution share counts code vs model
+  ---
+  duration_ms: 0.2734
+  type: 'test'
+  ...
+# Subtest: browser_plan schema documents intent, hints, estimate, familiarity and hard expects
+ok 70 - browser_plan schema documents intent, hints, estimate, familiarity and hard expects
+  ---
+  duration_ms: 0.3561
+  type: 'test'
+  ...
+# Subtest: live: an intent-level plan on a never-seen site resolves every target in code, clears a cookie banner, no model call
+ok 71 - live: an intent-level plan on a never-seen site resolves every target in code, clears a cookie banner, no model call
+  ---
+  duration_ms: 1314.5378
+  type: 'test'
+  ...
+# Subtest: live: soft misses keep going; an unresolvable intent returns adapt with candidates and the framework
+ok 72 - live: soft misses keep going; an unresolvable intent returns adapt with candidates and the framework
+  ---
+  duration_ms: 371.4991
+  type: 'test'
+  ...
+# Subtest: a coordinate-only step on a new site keeps its coordinates (nothing else could find the element)
+ok 73 - a coordinate-only step on a new site keeps its coordinates (nothing else could find the element)
+  ---
+  duration_ms: 0.3861
+  type: 'test'
+  ...
+# Subtest: injected helper version matches HELPER_VERSION so the fast path can hit
+ok 74 - injected helper version matches HELPER_VERSION so the fast path can hit
+  ---
+  duration_ms: 1.6358
+  type: 'test'
+  ...
+# Subtest: regional consent defaults
+    # Subtest: defaults on outside the EU/EEA/UK
+    ok 1 - defaults on outside the EU/EEA/UK
+      ---
+      duration_ms: 1.0641
+      type: 'test'
+      ...
+    # Subtest: defaults off for EU/EEA/UK locales or timezones, including conservative cases
+    ok 2 - defaults off for EU/EEA/UK locales or timezones, including conservative cases
+      ---
+      duration_ms: 0.9684
+      type: 'test'
+      ...
+    1..2
+ok 75 - regional consent defaults
+  ---
+  duration_ms: 3.1613
+  type: 'suite'
+  ...
+# Subtest: path templates and domains
+    # Subtest: keeps eTLD+1 and strips ids, tokens, and query is never part of the path
+    ok 1 - keeps eTLD+1 and strips ids, tokens, and query is never part of the path
+      ---
+      duration_ms: 1.9942
+      type: 'test'
+      ...
+    1..1
+ok 76 - path templates and domains
+  ---
+  duration_ms: 2.1333
+  type: 'suite'
+  ...
+# Subtest: collection gates and PII stripping
+    # Subtest: refuses auth, banking, incognito, and query-bearing raw use still drops query
+    ok 1 - refuses auth, banking, incognito, and query-bearing raw use still drops query
+      ---
+      duration_ms: 1.2489
+      type: 'test'
+      ...
+    # Subtest: sanitizeEvent never keeps page text, form values, passwords, cookies, or query strings
+    ok 2 - sanitizeEvent never keeps page text, form values, passwords, cookies, or query strings
+      ---
+      duration_ms: 1.5876
+      type: 'test'
+      ...
+    # Subtest: drops auth and banking events even if someone passes them in
+    ok 3 - drops auth and banking events even if someone passes them in
+      ---
+      duration_ms: 0.219
+      type: 'test'
+      ...
+    # Subtest: fingerprints strip text selectors and generated ids
+    ok 4 - fingerprints strip text selectors and generated ids
+      ---
+      duration_ms: 0.2024
+      type: 'test'
+      ...
+    1..4
+ok 77 - collection gates and PII stripping
+  ---
+  duration_ms: 3.6038
+  type: 'suite'
+  ...
+# Subtest: MetaHub consent, purge, and sink
+    # Subtest: uses a regional default and honors opt-out by purging the buffer and sink
+    ok 1 - uses a regional default and honors opt-out by purging the buffer and sink
+      ---
+      duration_ms: 6.4356
+      type: 'test'
+      ...
+    # Subtest: defaults off in EU and does not record until opted in
+    ok 2 - defaults off in EU and does not record until opted in
+      ---
+      duration_ms: 3.0575
+      type: 'test'
+      ...
+    # Subtest: never writes the raw install id into events
+    ok 3 - never writes the raw install id into events
+      ---
+      duration_ms: 2.4415
+      type: 'test'
+      ...
+    1..3
+ok 78 - MetaHub consent, purge, and sink
+  ---
+  duration_ms: 15.2118
+  type: 'suite'
+  ...
+# Subtest: priors loader
+    # Subtest: loads the bundled file and looks up flows by domain and path template
+    ok 1 - loads the bundled file and looks up flows by domain and path template
+      ---
+      duration_ms: 4.034
+      type: 'test'
+      ...
+    # Subtest: normalizePriors ignores empty domains
+    ok 2 - normalizePriors ignores empty domains
+      ---
+      duration_ms: 0.235
+      type: 'test'
+      ...
+    1..2
+ok 79 - priors loader
+  ---
+  duration_ms: 4.4679
+  type: 'suite'
+  ...
+# Subtest: consent copy stays in sync
+    # Subtest: extension, policy URL, and store/CONSENT.md share the same title and body
+    ok 1 - extension, policy URL, and store/CONSENT.md share the same title and body
+      ---
+      duration_ms: 0.8003
+      type: 'test'
+      ...
+    # Subtest: regionDefaultOn matches between the extension and the relay helpers
+    ok 2 - regionDefaultOn matches between the extension and the relay helpers
+      ---
+      duration_ms: 0.4346
+      type: 'test'
+      ...
+    1..2
+ok 80 - consent copy stays in sync
+  ---
+  duration_ms: 1.3904
+  type: 'suite'
+  ...
+# Subtest: setup mints a key to a file and returns the path only, never the token
+ok 81 - setup mints a key to a file and returns the path only, never the token
+  ---
+  duration_ms: 7.3938
+  type: 'test'
+  ...
+# Subtest: MCP configs are merged without clobbering existing servers or keys
+ok 82 - MCP configs are merged without clobbering existing servers or keys
+  ---
+  duration_ms: 21.41
+  type: 'test'
+  ...
+# Subtest: hooks start the relay and install the logon task; dry-run does not
+ok 83 - hooks start the relay and install the logon task; dry-run does not
+  ---
+  duration_ms: 4.7094
+  type: 'test'
+  ...
+# Subtest: mergeJsonMcp refuses to overwrite a config file that did not parse
+ok 84 - mergeJsonMcp refuses to overwrite a config file that did not parse
+  ---
+  duration_ms: 1.4088
+  type: 'test'
+  ...
+# Subtest: extracts title, URL, headings, links, tables, selection and readable text; skips password inputs
+ok 85 - extracts title, URL, headings, links, tables, selection and readable text; skips password inputs
+  ---
+  duration_ms: 3.726
+  type: 'test'
+  ...
+# Subtest: guard: blocked sites are refused; password values are redacted; oversize text is capped
+ok 86 - guard: blocked sites are refused; password values are redacted; oversize text is capped
+  ---
+  duration_ms: 1.8069
+  type: 'test'
+  ...
+# Subtest: page context stays attached across follow-up messages; refresh replaces; remove clears; chip shows title
+ok 87 - page context stays attached across follow-up messages; refresh replaces; remove clears; chip shows title
+  ---
+  duration_ms: 1.6882
+  type: 'test'
+  ...
+# Subtest: blocked pull does not attach context or post a message
+ok 88 - blocked pull does not attach context or post a message
+  ---
+  duration_ms: 0.4505
+  type: 'test'
+  ...
+# Subtest: chrome:// and Chrome Web Store pulls are refused; password values never survive sanitize
+ok 89 - chrome:// and Chrome Web Store pulls are refused; password values never survive sanitize
+  ---
+  duration_ms: 0.3394
+  type: 'test'
+  ...
+# Subtest: main article text is kept when headings and links are large
+ok 90 - main article text is kept when headings and links are large
+  ---
+  duration_ms: 0.7472
+  type: 'test'
+  ...
+# Subtest: identify handshake prefers explicit tool, then clientInfo, then client name + key label
+ok 91 - identify handshake prefers explicit tool, then clientInfo, then client name + key label
+  ---
+  duration_ms: 1.5632
+  type: 'test'
+  ...
+# Subtest: message round trip: user and agent messages are stored and readable, secrets redacted
+ok 92 - message round trip: user and agent messages are stored and readable, secrets redacted
+  ---
+  duration_ms: 0.5632
+  type: 'test'
+  ...
+# Subtest: multi-session: two keys get two chats; closing a tab moves only that chat to Closed
+ok 93 - multi-session: two keys get two chats; closing a tab moves only that chat to Closed
+  ---
+  duration_ms: 1.3732
+  type: 'test'
+  ...
+# Subtest: matchPattern accepts substrings and regex
+ok 94 - matchPattern accepts substrings and regex
+  ---
+  duration_ms: 473.0474
+  type: 'test'
+  ...
+# Subtest: publicPlan hides nothing required for the panel and keeps confirm summaries
+ok 95 - publicPlan hides nothing required for the panel and keeps confirm summaries
+  ---
+  duration_ms: 0.9088
+  type: 'test'
+  ...
+# Subtest: MCP tools/list includes browser_plan with expected-state fields
+ok 96 - MCP tools/list includes browser_plan with expected-state fields
+  ---
+  duration_ms: 0.4516
+  type: 'test'
+  ...
+# Subtest: checkExpect matches path and presence-free fields
+ok 97 - checkExpect matches path and presence-free fields
+  ---
+  duration_ms: 1.076
+  type: 'test'
+  ...
+# Subtest: pickBranch selects the first when that matches and compactDelta stays small
+ok 98 - pickBranch selects the first when that matches and compactDelta stays small
+  ---
+  duration_ms: 0.5839
+  type: 'test'
+  ...
+# Subtest: pickBranch does not treat unverified presence as a match
+ok 99 - pickBranch does not treat unverified presence as a match
+  ---
+  duration_ms: 0.9172
+  type: 'test'
+  ...
+# Subtest: presenceTarget uses helper role[name] syntax and snapshot includes need text
+ok 100 - presenceTarget uses helper role[name] syntax and snapshot includes need text
+  ---
+  duration_ms: 0.5012
+  type: 'test'
+  ...
+# Subtest: a 3-step plan confirms cheaply and reaches Gamma
+ok 101 - a 3-step plan confirms cheaply and reaches Gamma
+  ---
+  duration_ms: 1321.8921
+  type: 'test'
+  ...
+# Subtest: a missed hard expectation returns a re-plan event and adjust continues from confirmed state
+ok 102 - a missed hard expectation returns a re-plan event and adjust continues from confirmed state
+  ---
+  duration_ms: 265.4694
+  type: 'test'
+  ...
+# plan-latency-local {"unplannedMs":[129,121,55],"plannedMs":[111,96,64],"savedMs":[18,25,-9],"confirmMs":[1,1,1]}
+# Subtest: planned confirms are cheaper than a full snapshot after each step
+ok 103 - planned confirms are cheaper than a full snapshot after each step
+  ---
+  duration_ms: 639.8375
+  type: 'test'
+  ...
+# Subtest: a matching cookie-banner branch continues without returning to the model
+ok 104 - a matching cookie-banner branch continues without returning to the model
+  ---
+  duration_ms: 271.6857
+  type: 'test'
+  ...
+# Subtest: PlanHub pauses on take-back without a confirm model call
+ok 105 - PlanHub pauses on take-back without a confirm model call
+  ---
+  duration_ms: 0.8187
+  type: 'test'
+  ...
+# Subtest: LocatorCache remembers a resolved target per site and reloads from disk
+ok 106 - LocatorCache remembers a resolved target per site and reloads from disk
+  ---
+  duration_ms: 3.0861
+  type: 'test'
+  ...
+# Subtest: resolveExistingTab reuses the last tab, then a tab in the same group
+ok 107 - resolveExistingTab reuses the last tab, then a tab in the same group
+  ---
+  duration_ms: 0.2654
+  type: 'test'
+  ...
+# Subtest: settings default to an on AI cursor, Cowork click mode and an off input block
+not ok 108 - settings default to an on AI cursor, Cowork click mode and an off input block
+  ---
+  duration_ms: 0.3359
+  type: 'test'
+  location: 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\test\\planner-rework.test.mjs:42:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open 'D:\\Luculent\\wt-web-bd-bench\\tools\\browser-driver\\extension\\options.html'"
+  code: 'ENOENT'
+  stack: |-
+    readFileSync (node:fs:484:20)
+    TestContext.<anonymous> (file:///D:/Luculent/wt-web-bd-bench/tools/browser-driver/test/planner-rework.test.mjs:46:15)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: helper v11 exposes exists and a non-intercepting AI cursor
+ok 109 - helper v11 exposes exists and a non-intercepting AI cursor
+  ---
+  duration_ms: 0.2909
+  type: 'test'
+  ...
+# Subtest: identify handshake, message round trip, and multi-session via the relay
+ok 110 - identify handshake, message round trip, and multi-session via the relay
+  ---
+  duration_ms: 54.617
+  type: 'test'
+  ...
+# Subtest: pull page context attaches to the chat, follow-ups keep it, blocked sites refused
+ok 111 - pull page context attaches to the chat, follow-ups keep it, blocked sites refused
+  ---
+  duration_ms: 16.5154
+  type: 'test'
+  ...
+# Subtest: pause_for_human resumes from the panel and times out otherwise
+ok 112 - pause_for_human resumes from the panel and times out otherwise
+  ---
+  duration_ms: 176.5068
+  type: 'test'
+  ...
+# Subtest: recorded flow record and list via the relay
+ok 113 - recorded flow record and list via the relay
+  ---
+  duration_ms: 9.8132
+  type: 'test'
+  ...
+# Subtest: setup writes a key file path only, and MCP tools/list includes the new tools
+ok 114 - setup writes a key file path only, and MCP tools/list includes the new tools
+  ---
+  duration_ms: 13.0247
+  type: 'test'
+  ...
+# Subtest: resolveKey reads LBD_KEY_FILE and does not require LBD_KEY
+ok 115 - resolveKey reads LBD_KEY_FILE and does not require LBD_KEY
+  ---
+  duration_ms: 1.0099
+  type: 'test'
+  ...
+# Subtest: two Chrome profiles stay connected; listProfiles returns both; one disconnect does not drop the other
+ok 116 - two Chrome profiles stay connected; listProfiles returns both; one disconnect does not drop the other
+  ---
+  duration_ms: 0.9406
+  type: 'test'
+  ...
+# Subtest: killswitch detaches every connected Chrome profile, not just the primary
+ok 117 - killswitch detaches every connected Chrome profile, not just the primary
+  ---
+  duration_ms: 10.53
+  type: 'test'
+  ...
+# Subtest: regional default navMeta on connect does not overwrite a saved user consent choice
+ok 118 - regional default navMeta on connect does not overwrite a saved user consent choice
+  ---
+  duration_ms: 8.6206
+  type: 'test'
+  ...
+# Subtest: defaults are safe
+ok 119 - defaults are safe
+  ---
+  duration_ms: 448.9334
+  type: 'test'
+  ...
+# Subtest: passwords: values are redacted and typing into password fields is blocked by default
+ok 120 - passwords: values are redacted and typing into password fields is blocked by default
+  ---
+  duration_ms: 671.9917
+  type: 'test'
+  ...
+# Subtest: passwords: allowed when the setting and the key scope allow it, still blocked for keys without the scope
+ok 121 - passwords: allowed when the setting and the key scope allow it, still blocked for keys without the scope
+  ---
+  duration_ms: 181.0837
+  type: 'test'
+  ...
+# Subtest: browser-internal pages, file:// and javascript: URLs are blocked
+ok 122 - browser-internal pages, file:// and javascript: URLs are blocked
+  ---
+  duration_ms: 72.3871
+  type: 'test'
+  ...
+# Subtest: Chrome Web Store pages are refused even when bankingPreset is off
+ok 123 - Chrome Web Store pages are refused even when bankingPreset is off
+  ---
+  duration_ms: 81.0828
+  type: 'test'
+  ...
+# Subtest: banking/payment preset blocks by default and can be turned off; blocklist and allowlist work
+ok 124 - banking/payment preset blocks by default and can be turned off; blocklist and allowlist work
+  ---
+  duration_ms: 206.12
+  type: 'test'
+  ...
+# Subtest: eval: off by default, needs the eval scope, and "ask me" waits for approval
+ok 125 - eval: off by default, needs the eval scope, and "ask me" waits for approval
+  ---
+  duration_ms: 312.0927
+  type: 'test'
+  ...
+# Subtest: approval requests time out as declined
+ok 126 - approval requests time out as declined
+  ---
+  duration_ms: 5065.624
+  type: 'test'
+  ...
+# Subtest: cookies and site storage are off by default
+ok 127 - cookies and site storage are off by default
+  ---
+  duration_ms: 131.7868
+  type: 'test'
+  ...
+# Subtest: uploads ask first by default (approve uploads, decline blocks), and can be turned off
+ok 128 - uploads ask first by default (approve uploads, decline blocks), and can be turned off
+  ---
+  duration_ms: 319.0108
+  type: 'test'
+  ...
+# Subtest: downloads can be turned off
+ok 129 - downloads can be turned off
+  ---
+  duration_ms: 979.9304
+  type: 'test'
+  ...
+# Subtest: submitting a login or payment form asks first; declining sends nothing
+ok 130 - submitting a login or payment form asks first; declining sends nothing
+  ---
+  duration_ms: 270.4467
+  type: 'test'
+  ...
+# Subtest: read-only mode: reading and navigation work, clicks and typing are refused
+ok 131 - read-only mode: reading and navigation work, clicks and typing are refused
+  ---
+  duration_ms: 64.6586
+  type: 'test'
+  ...
+# Subtest: per-key override and key scopes tighten the global policy
+ok 132 - per-key override and key scopes tighten the global policy
+  ---
+  duration_ms: 41.301
+  type: 'test'
+  ...
+# Subtest: rate limit per key
+ok 133 - rate limit per key
+  ---
+  duration_ms: 75.2959
+  type: 'test'
+  ...
+# Subtest: raw CDP is off by default
+ok 134 - raw CDP is off by default
+  ---
+  duration_ms: 15.0431
+  type: 'test'
+  ...
+# Subtest: audit log records actions and denials without typed text
+ok 135 - audit log records actions and denials without typed text
+  ---
+  duration_ms: 6.0692
+  type: 'test'
+  ...
+# Subtest: DNS-rebinding guard: foreign Host header is refused
+ok 136 - DNS-rebinding guard: foreign Host header is refused
+  ---
+  duration_ms: 3.6989
+  type: 'test'
+  ...
+# Subtest: blob: URLs inherit the origin host for blocklist, allowlist, and banking rules
+ok 137 - blob: URLs inherit the origin host for blocklist, allowlist, and banking rules
+  ---
+  duration_ms: 0.5048
+  type: 'test'
+  ...
+# Subtest: hasUrlScheme distinguishes real schemes from host:port
+ok 138 - hasUrlScheme distinguishes real schemes from host:port
+  ---
+  duration_ms: 0.149
+  type: 'test'
+  ...
+# Subtest: disjoint allowlists in combination block every host
+ok 139 - disjoint allowlists in combination block every host
+  ---
+  duration_ms: 0.4268
+  type: 'test'
+  ...
+# Subtest: tabs.new and runParallel cannot launch headless Chrome without the headless scope or when policy denies it
+ok 140 - tabs.new and runParallel cannot launch headless Chrome without the headless scope or when policy denies it
+  ---
+  duration_ms: 77.6354
+  type: 'test'
+  ...
+# Subtest: tabs.new treats host:port as a host, not a scheme, and still applies banking and blocklist rules
+ok 141 - tabs.new treats host:port as a host, not a scheme, and still applies banking and blocklist rules
+  ---
+  duration_ms: 93.0119
+  type: 'test'
+  ...
+1..141
+# tests 149
+# suites 6
+# pass 135
+# fail 14
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 48732.783

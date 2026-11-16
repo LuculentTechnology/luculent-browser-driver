@@ -39,11 +39,10 @@ the extension, and 1,766 ms / 1,121 ms for Playwright MCP form / search. Nov 13 
 post-click settle step were added) gave 96 ms batched headless and 150 ms in the extension.
 
 ## Earlier transport comparison (Nov 14, 2026, `harness/compare.mjs`)
-Published earlier in this file; kept for reference. Same fixture pages; Luculent over each transport and Playwright MCP.
+Same fixture pages; Luculent over each transport and Playwright MCP. Run log: [`harness/logs/compare-2026-11-14.json`](../harness/logs/compare-2026-11-14.json).
 
 | Driver / Transport | Cold startup | Form batched (p50 / p95) | Form per-action (p50 / p95) | Form reqs | Form bytes | Search batched (p50 / p95) | Search per-action (p50 / p95) | Search reqs | Search bytes | Ratio vs LBD matched |
 |---|---:|---|---|---|---|---|---|---|---|---|
-| LBD extension, real tab (MCP stdio, provisional baseline) | 145 ms | **159 ms** / - | 213 ms / - | 1 / 7 | 0.8 KB / 2.8 KB | **174 ms** / - | 196 ms / - | 1 / 4 | 0.4 KB / 1.5 KB | 1.0x |
 | LBD extension, real tab (MCP stdio, 7-run p50/p95) | 145 ms | **184 ms** / 186 ms | 247 ms / 259 ms | 1 / 7 | 1.3 KB / 4.0 KB | **180 ms** / 182 ms | 186 ms / 191 ms | 1 / 4 | 0.7 KB / 2.3 KB | 1.0x |
 | LBD headless (MCP stdio, 7-run p50/p95) | 452 ms | **132 ms** / 141 ms | 167 ms / 170 ms | 1 / 7 | 1.3 KB / 3.9 KB | **152 ms** / 154 ms | 160 ms / 173 ms | 1 / 4 | 0.7 KB / 2.2 KB | 1.0x |
 | LBD extension, real tab (MCP HTTP `/mcp`) | 25 ms | **188 ms** / 235 ms | 293 ms / 314 ms | 1 / 7 | 1.3 KB / 3.9 KB | **182 ms** / 183 ms | 206 ms / 209 ms | 1 / 4 | 0.7 KB / 2.2 KB | 1.02x |

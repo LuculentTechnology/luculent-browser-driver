@@ -1,77 +1,23 @@
 # <picture><source media="(prefers-color-scheme: dark)" srcset="store/assets/luculent-lockup-readme.svg"><source media="(prefers-color-scheme: light)" srcset="store/assets/luculent-lockup-readme-on-light.svg"><img src="store/assets/luculent-lockup-readme.svg" width="156" height="39" alt="Luculent" align="absmiddle"></picture> Browser Driver for AI Agents
 
-**The high-speed, persistent browser driver built for AI agents: up to 14x faster than Playwright MCP and OpenCode Browse, 75.7% fewer tokens, predictive 3-action lookahead, and native Chrome security controls.**
+**A fast, persistent browser driver for AI agents, with Chrome security controls built in.**
 
 > Built by [Luculent](https://luculent.dev): SOPs for AI agents. **[Join the beta at luculent.dev/beta](https://luculent.dev/beta)**
 
 ---
 
-### 📊 Official Benchmark & Competitor Analysis Report
+### Benchmark results
 
-> 🏆 **[Read the Full Empirical Benchmark Report (`harness/RESULTS.md`) &rarr;](harness/RESULTS.md)**
->
-> **Key Derived Findings (92 Web Test Cases, 7 Frontier Models & Claude Opus 5.5 Constant Model):**
-> * ⚡ **Speed Advantage**: **10.2x – 14.0x faster** than Playwright MCP and OpenCode Browse (144–172 ms vs 1,750–2,406 ms).
-> * 🎯 **Accuracy & Resilience**: **100% pass rate** across all dynamic test cases; competitors failed (80%) on late element injection and stale references.
-> * 📦 **Multi-Step Batching**: Executes 7-step sequences in **1 compound CDP call** (1.3 KB) instead of 7–11 serialized LLM turns (5–12 KB).
-> * 🔮 **Predictive 3-Action Lookahead**: **2.7x faster** overall task completion by pre-resolving actions and clearing modal blockers in 0 tokens.
-> * 💰 **Token Efficiency**: **75.7% token reduction** on Claude Opus 5.5 (1,121 tokens vs 4,620 tokens for Playwright).
->
-> 👉 **[Jump to the full data, model matrix, and benchmark methodology in `harness/RESULTS.md`](harness/RESULTS.md)**
+Every number below comes from a run log committed to this repo. Full tables and logs: **[`harness/RESULTS.md`](harness/RESULTS.md)**.
+
+* **Driver speed:** a 7-action sign-up form takes **131 ms** in one call with Luculent (headless) vs **1,748 ms** with Playwright MCP 0.0.85, on the same pages and machine (median of 7, no model involved).
+* **Fewer calls, less to read:** the form is **1** tool call instead of 7, and the agent reads **0.8 KB** instead of 4.0 KB.
+* **Real models:** DeepSeek v4.1 Flash and Codex CLI each passed **10/10** harness tasks (form, search, multitab, dynamic, upload, iframe, hover, drag, popup, guard). DeepSeek's 10 runs cost $0.0177 in total.
+* **Broad suite:** 35/37 local fixture cases and 51/55 live public sites pass headless (3 of the 4 live misses were sites that block headless browsers).
 
 ---
 
 <picture><source media="(prefers-reduced-motion: reduce)" srcset="store/assets/readme-browser-run-still.png"><img src="store/assets/readme-browser-run.png" alt="Illustrated replay of five browser actions on a Luculent sample site: open the form, fill the name and email, select Pro, and check the terms. The original batch took 229 ms. A slower replay shows each action."></picture>
-
----
-
-## Derived Competitive Analysis: Luculent vs. Playwright vs. Browse
-
-### 1. ⚡ Speed: 10.2x – 14.0x Faster Execution
-* **Why Competitors Are Slow**: Playwright MCP and OpenCode Browse execute individual DOM commands across separate child process boundaries or CLI invocations, incurring 1,750 ms – 2,406 ms of driver overhead for a basic form.
-* **Why Luculent Is Faster**: Luculent attaches directly to Chrome's native DevTools Protocol (CDP) session via a persistent local relay. Compound actions execute in a single roundtrip, finishing identical 7-step forms in **144.0 ms** (headless) / **172.4 ms** (extension) — an empirical **10.2x to 14.0x speedup**.
-
-### 2. 🎯 Accuracy & Self-Healing Resilience (100% vs. 80%)
-* **Why Competitors Fail**: Modern dynamic Single Page Applications (SPAs) mutate elements, re-render frames, and inject async banners. Playwright fails with hard selector timeouts (`locator.waitFor`), and Browse loses references (`Unknown ref: e2`).
-* **Why Luculent Passes 100%**: Luculent implements unified wait aliases (`for:'idle'`, `state:'visible'`, `navigated:false`) with automatic stale reference hints and React synthetic event tracking (`_valueTracker`), maintaining a **100% pass rate** across all 89 real-world web application fixtures.
-
-### 3. 📦 Multi-Step Compound Batching (75.7% Token Savings)
-* **The Turn-by-Turn Cost**: Traditional agents issue one tool call per click or keystroke. A 7-step signup requires 7 LLM turns, forcing Claude Opus 5.5 to parse 4,620 tokens across 14.2 seconds.
-* **The Luculent Compound Advantage**: `browser_run` bundles the entire interaction flow into **1 turn**. Opus 5.5 consumes just **1,005 tokens** and finishes in **4.9 seconds** — saving **75.7% of the inference budget** and cutting wire payload by 74.4%.
-
-### 4. 🔮 Predictive 3-Action Lookahead (2.7x Speedup via Preemptive Planning)
-* **Preemptive Priors (`browser_plan`)**: Agents supply an intent-level plan with `estimate: { actions, blockers }` seeded by domain navigation priors (`priors.json`).
-* **Zero-Token Blocker Clearance**: The driver resolves likely next actions and clears GDPR/cookie banners in local code with zero model turns.
-* **Empirical Speed Gain**: On Claude Opus 5.5, enabling predictive lookahead drops average multi-step task duration from **16.8 s down to 6.3 s** (**2.7x faster**) and saves 73.8% of token overhead.
-
----
-
-### Head-to-Head Benchmark Matrix: Claude Opus 5.5 Constant Model
-
-Evaluated on `AMD Ryzen 7 8840U w/ Radeon 780M Graphics, 15 GB, win32` across 5 representative agent workflows:
-
-| Benchmark Flow | Driver Engine | Accuracy / Pass | End-to-End Latency | Time to First Action (TTFA) | Driver Latency | Batched Speedup | Total Tokens | Wire Payload |
-|---|---|---|---|---|---|---|---|---|
-| **Multi-Step Form Signup** (7 actions) | **Luculent MCP** | **PASS (100%)** | **4.9 s** | **0.98 s** | **172.4 ms** | **12.2x** (1 compound turn) | **1,005** | **1.3 KB** |
-| | Playwright MCP | PASS (100%) | 14.2 s | 1.85 s | 1,749.6 ms | 1.0x (7 serial turns) | 4,030 | 5.1 KB |
-| | OpenCode Browse | PASS (100%) | 16.8 s | 2.10 s | 2,406.1 ms | 1.0x (multi-turn CLI) | 3,530 | 8.2 KB |
-| **Dynamic SPA Search & Wait** (Async query) | **Luculent MCP** | **PASS (100%)** | **6.3 s** | **0.72 s** | **171.0 ms** | **6.5x** (1 compound turn) | **870** | **0.8 KB** |
-| | Playwright MCP | PASS (100%) | 11.8 s | 1.40 s | 1,109.2 ms | 1.0x (4 serial turns) | 3,100 | 3.0 KB |
-| | OpenCode Browse | PASS (100%) | 13.5 s | 1.65 s | 2,101.1 ms | 1.0x (4 serial turns) | 2,800 | 5.1 KB |
-| **Multi-Tab Orchestration** (3 tabs) | **Luculent MCP** | **PASS (100%)** | **3.5 s** | **0.55 s** | **261.0 ms** | **5.4x** (Parallel tab batch) | **1,150** | **2.1 KB** |
-| | Playwright MCP | PASS (100%) | 12.6 s | 1.95 s | 1,410.0 ms | 1.0x (Context switching) | 4,590 | 6.8 KB |
-| | OpenCode Browse | PASS (100%) | 15.1 s | 2.40 s | 2,180.0 ms | 1.0x (Session binding) | 4,330 | 9.4 KB |
-| **Dynamic DOM Mutation & Recovery** | **Luculent MCP** | **PASS (100%)** | **4.1 s** | **0.60 s** | **173.0 ms** | Auto-Wait Self-Healing | **1,070** | **1.2 KB** |
-| | Playwright MCP | FAIL (0%) | 30.0 s (timeout) | 1.60 s | Stalled | Selector timeout | 4,610 | 5.9 KB |
-| | OpenCode Browse | FAIL (0%) | 18.4 s | 1.90 s | 3,450.0 ms | Lost ref on re-render | 4,430 | 8.7 KB |
-| **E-Commerce Checkout Flow** (5 steps) | **Luculent MCP** | **PASS (100%)** | **7.8 s** | **0.88 s** | **315.0 ms** | **9.1x** (Compound flow) | **1,510** | **2.8 KB** |
-| | Playwright MCP | PASS (100%) | 22.5 s | 1.90 s | 2,890.0 ms | 1.0x (11 serial turns) | 6,770 | 11.4 KB |
-| | OpenCode Browse | PASS (100%) | 25.2 s | 2.25 s | 3,920.0 ms | 1.0x (11 serial steps) | 6,230 | 14.6 KB |
-| **Overall Benchmark Average** | **Luculent MCP** | **5/5 (100%)** | **5.3 s avg** | **0.75 s avg** | **218.5 ms avg** | **8.3x avg acceleration** | **1,121 avg (75.7% saved)** | **1.6 KB avg** |
-| | Playwright MCP | 4/5 (80%) | 18.2 s avg | 1.74 s avg | 1,789.7 ms avg | 1.0x (baseline) | 4,620 avg | 6.4 KB avg |
-| | OpenCode Browse | 4/5 (80%) | 17.8 s avg | 2.06 s avg | 2,811.4 ms avg | 0.9x vs Playwright | 4,264 avg | 9.2 KB avg |
-
-*Complete benchmark scripts, raw data, and 7-frontier-model cross-evaluations are published in [**`harness/RESULTS.md`**](harness/RESULTS.md).*
 
 ---
 
@@ -93,18 +39,19 @@ agent --MCP / HTTP / WebSocket + API key--> relay (127.0.0.1:47800) --WebSocket-
 * **Works everywhere a page does.** Shadow DOM, iframes (including cross-origin), popups, dialogs, drag and drop,
   file uploads, downloads, PDFs, media, geolocation, and hidden background tabs.
 
-## Pure Driver Replay vs Playwright MCP & OpenCode Browse
+## Driver speed vs Playwright MCP
 
-Real measurements from `npm run bench` on the same local pages, same machine, same MCP stdio transport (median of
-7 runs; model thinking time excluded for all). Full method: [harness/RESULTS.md](harness/RESULTS.md).
+Real measurements from `npm run bench` on the same local pages, same machine (AMD Ryzen 5 5500), same MCP stdio
+transport, both headless. Median of 7 runs; no model is involved. Full method: [store/BENCHMARK.md](store/BENCHMARK.md).
 
-| Flow (local test page) | Luculent Browser Driver | Playwright MCP 0.0.85 | OpenCode Browse 0.38.1 | Speedup |
-|---|---|---|---|---|
-| 7-action sign-up form, batched in one call (headless) | **144.0 ms** | 1,749.6 ms (one call/action) | 2,406.1 ms (chained CLI) | **12.2x – 16.7x faster** |
-| Same form in your Chrome tab, through extension | **172.4 ms** | Unsupported in isolated mode | Unsupported in extension | **10.2x – 14.0x faster** |
-| Same form, one MCP call per action | **227.7 ms** | 1,749.6 ms | 3,892.4 ms | **7.7x – 17.1x faster** |
-| 4-action search with delayed result, batched | **171.0 ms** | 1,109.2 ms | 2,101.1 ms | **6.5x – 12.3x faster** |
-| Payload the model has to read for the form | **1.3 KB** | 5.1 KB | 8.2 KB | **3.9x – 6.3x less** |
+| Flow (local test page) | Luculent Browser Driver | Playwright MCP 0.0.85 |
+|---|---:|---:|
+| 7-action sign-up form, all steps in one call | **131 ms** | 1,748 ms |
+| Same form, one call per action | **165 ms** | 1,748 ms |
+| Same form in your Chrome tab, through the extension | **177 ms** | not supported |
+| 4-action search with a delayed result, one call | **163 ms** | 1,115 ms |
+| Data the agent reads for the form | **0.8 KB** | 4.0 KB |
+| Cold start, new server to first page | **522 ms** | 774 ms |
 
 ## Quickstart
 
