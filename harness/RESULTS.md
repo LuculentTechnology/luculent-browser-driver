@@ -12,24 +12,26 @@ Machine for all runs: AMD Ryzen 5 5500, 32 GB RAM, Windows. Times are wall clock
 | 5. Broad site suite | Nov 15, 2026 | [`logs/broad-local-headless-2026-11-15.json`](logs/broad-local-headless-2026-11-15.json), [`logs/broad-live-headless-2026-11-15.json`](logs/broad-live-headless-2026-11-15.json) |
 | 6. Unit and security tests | Nov 15, 2026 | [`logs/npm-test-2026-11-15.tap`](logs/npm-test-2026-11-15.tap) |
 
-## 1. Driver speed vs Playwright MCP (`node bench/bench.mjs`)
+## 1. Driver speed vs Playwright MCP and OpenCode Browse (`node bench/bench.mjs`, `node bench/browse-bench.mjs`)
 
-No model is involved. Both drivers run headless as MCP servers over stdio on the same local fixture pages (`test/fixtures.mjs`) and are timed by the same client. Median of 7 runs. Full method: [`store/BENCHMARK.md`](../store/BENCHMARK.md).
+No model is involved. All three run as MCP servers over stdio on the same local fixture pages (`test/fixtures.mjs`) and are timed by the same client. Median of 7 runs. Luculent and Playwright MCP run headless Chrome (`bench/results.json`, Nov 15, 2026, 9:52 PM PT). OpenCode Browse 0.0.17 drives Playwright's Chromium through its extension, paired to its relay, with agent tabs in their own window and human-like input off (`bench/results-browse.json`, Nov 15, 2026, 11:57 PM PT). Full method: [`store/BENCHMARK.md`](../store/BENCHMARK.md).
 
-| Measure | Luculent (headless) | Playwright MCP 0.0.85 (headless) |
-|---|---:|---:|
-| 7-action sign-up form, all steps in one call | 131 ms | 1,748 ms |
-| Same form, one call per action | 165 ms | 1,748 ms |
-| 4-action search, all steps in one call | 163 ms | 1,115 ms |
-| Same search, one call per action | 168 ms | 1,115 ms |
-| Time per tool call, form | 5.9 ms | 45.3 ms |
-| Time per tool call, search | 25.9 ms | 505.6 ms |
-| Tool calls to finish the form | 1 | 7 |
-| Data the agent reads, form | 0.8 KB | 4.0 KB |
-| Data the agent reads, search | 0.4 KB | 2.4 KB |
-| Cold start, new server to first page | 522 ms | 774 ms |
+| Measure | Luculent (headless) | Playwright MCP 0.0.85 (headless) | OpenCode Browse 0.0.17 |
+|---|---:|---:|---:|
+| 7-action sign-up form, all steps in one call | 131 ms | 1,748 ms | 411 ms |
+| Same form, one call per action | 165 ms | 1,748 ms | 591 ms |
+| 4-action search, all steps in one call | 163 ms | 1,115 ms | 323 ms |
+| Same search, one call per action | 168 ms | 1,115 ms | 418 ms |
+| Time per tool call, form | 5.9 ms | 45.3 ms | 81.6 ms |
+| Time per tool call, search | 25.9 ms | 505.6 ms | 104 ms |
+| Tool calls to finish the form | 1 | 7 | 1 |
+| Data the agent reads, form | 0.8 KB | 4.0 KB | 0.7 KB |
+| Data the agent reads, search | 0.4 KB | 2.4 KB | 0.4 KB |
+| Cold start, new server to first page | 522 ms | 774 ms | 353 ms (browser already running) |
 
 Luculent through the extension in a real Chrome tab, same run: form 177 ms batched / 237 ms per action, search 178 ms / 193 ms.
+
+OpenCode Browse at its default settings (`bench/results-browse-defaults.json`): form 5,428 ms batched / 6,494 ms per action, search 328 ms / 450 ms, cold start 564 ms. Its agent tab sits in the background of your window, where Chrome throttles it, so each click took about 2 s.
 
 ## 2. Transport comparison (`node harness/compare.mjs --iters 7`)
 
@@ -44,7 +46,7 @@ Same fixture pages. p50 / p95 over 7 runs.
 | Luculent WebSocket `/v1/ws`, extension tab | 3 ms | 209 / 223 ms | 297 / 329 ms | 189 / 195 ms | 213 / 217 ms |
 | Playwright MCP 0.0.85, headless | 802 ms | not supported | 1,766 / 1,782 ms | not supported | 1,122 / 1,134 ms |
 
-Extension cold connect (Chrome start to relay paired): 1,781 ms. OpenCode Browse and the Kimi browser extension were not installed on this machine, so the log has no numbers for them.
+Extension cold connect (Chrome start to relay paired): 1,781 ms. OpenCode Browse and the Kimi browser extension were not installed for this Nov 14 run, so this log has no numbers for them; OpenCode Browse was measured on Nov 15 (section 1).
 
 ## 3. Real model runs, 10 tasks (`node harness/models.mjs`)
 
