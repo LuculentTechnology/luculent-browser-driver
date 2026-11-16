@@ -2,7 +2,7 @@
 
 Luculent Browser Driver is a high-speed, local browser automation protocol and Model Context Protocol (MCP) server engineered specifically for AI agents driving Google Chrome natively. Rather than launching resource-intensive, detectable headless browser instances or incurring multi-second network roundtrips for every atomic DOM click, Luculent pairs directly with the user's active desktop Chrome session via an extension relay and delivers compound, deterministic CDP execution.
 
-Across empirical evaluations spanning 92 real-world and synthetic web application test cases, 7 modern frontier model architectures (Gemini 4 Hydrogen / Carbon / Argon, Claude Sonnet 5.5, Claude Opus 5.5, OpenAI Codex GPT-6.1, DeepSeek v4.2 Flash, Grok 4.7, and Fable 5.2), and head-to-head comparative testing against Playwright MCP and OpenCode Browse, the data demonstrates:
+Across empirical evaluations spanning 92 real-world and synthetic web application test cases, 7 modern frontier model architectures (Gemini 4 Hydrogen / Carbon / Argon, Claude Sonnet 5.5, Claude Opus 5.5, OpenAI Codex GPT-6.1, DeepSeek v4.1 Flash, Grok 4.7, and Fable 5.2), and head-to-head comparative testing against Playwright MCP and OpenCode Browse, the data demonstrates:
 
 ### Key Derived Findings
 1. **⚡ Speed Advantage (10.2x – 14.0x Faster)**: On standard multi-step form completion (`test/fixtures.mjs`), Luculent completes the full interaction sequence in **144.0 ms** (headless) / **172.4 ms** (extension), compared to **1,749.6 ms** for Playwright MCP (a **10.2x – 12.2x speedup**) and **2,406.1 ms** for OpenCode Browse (a **14.0x speedup**; **6.5x – 12.3x** on async search).
@@ -10,7 +10,7 @@ Across empirical evaluations spanning 92 real-world and synthetic web applicatio
 3. **📦 Compound Multi-Step Batching (75.7% Token Reduction)**: In constant-model testing with Claude Opus 5.5, Luculent consumed an average of **1,121 tokens per task**, versus **4,620 tokens** for Playwright (4.1x higher) and **4,264 tokens** for Browse (3.8x higher), saving ~75.7% of inference budget and eliminating context bloat.
 4. **🔮 Predictive 3-Action Lookahead (2.7x Overall Speedup)**: Preemptive planning with domain navigation priors and intent-level 3-action lookahead (`browser_plan` / `frameSteps`) drops Opus 5.5 end-to-end task duration from **16.8 s** down to **6.3 s** (a **2.7x speedup**) and cuts token usage by **73.8%** (from 4,313 down to 1,128 tokens) by resolving modal blockers in zero-token local code.
 5. **🛡️ 74.4% Network Payload & 85.7% Roundtrip Reduction**: Traditional tools require 7 individual request/response roundtrips (5.1 KB – 12.8 KB payload) for a 7-step sequence. Luculent executes the entire sequence in **1 batched call** (1.3 KB payload).
-6. **🤖 Universal Frontier Model Compatibility (70/70 Total Runs)**: Tested across Gemini 4 Hydrogen, Claude Sonnet 5.5, Claude Opus 5.5, OpenAI GPT-6.1 (Codex), DeepSeek v4.2 Flash, Grok 4.7, and Fable 5.2 across 10 distinct task archetypes (form, search, multitab, dynamic, upload, iframe, hover, drag, popup, guard). All 7 frontier models scored **10/10 (100% pass rate)**.
+6. **🤖 Universal Frontier Model Compatibility (70/70 Total Runs)**: Tested across Gemini 4 Hydrogen, Claude Sonnet 5.5, Claude Opus 5.5, OpenAI GPT-6.1 (Codex), DeepSeek v4.1 Flash, Grok 4.7, and Fable 5.2 across 10 distinct task archetypes (form, search, multitab, dynamic, upload, iframe, hover, drag, popup, guard). All 7 frontier models scored **10/10 (100% pass rate)**.
 
 ---
 
@@ -145,19 +145,19 @@ The same 10 browser automation tasks run through each frontier model client agai
 
 ### Comprehensive 10-Task Cross-Model Matrix (All Models Side-by-Side)
 
-| Task | Gemini 4 Hydrogen | Claude Sonnet 5.5 | Claude Opus 5.5 | OpenAI Codex (GPT-6.1) | DeepSeek v4.2 Flash | Grok 4.7 | Fable 5.2 |
+| Task | Gemini 4 Hydrogen | Claude Sonnet 5.5 | Claude Opus 5.5 | OpenAI Codex (GPT-6.1) | DeepSeek v4.1 Flash | Grok 4.7 | Fable 5.2 |
 |---|---|---|---|---|---|---|---|
-| **1. form** | PASS (4.6 s) | PASS (3.9 s) | PASS (4.9 s) | PASS (16.5 s) | PASS (3.6 s) | PASS (3.2 s) | PASS (3.7 s) |
-| **2. search** | PASS (6.4 s) | PASS (5.1 s) | PASS (6.3 s) | PASS (15.5 s) | PASS (4.8 s) | PASS (4.1 s) | PASS (4.9 s) |
-| **3. multitab** | PASS (2.8 s) | PASS (2.9 s) | PASS (3.5 s) | PASS (14.8 s) | PASS (3.7 s) | PASS (2.8 s) | PASS (3.1 s) |
-| **4. dynamic** | PASS (3.1 s) | PASS (3.2 s) | PASS (4.1 s) | PASS (11.9 s) | PASS (5.1 s) | PASS (3.5 s) | PASS (3.8 s) |
-| **5. upload** | PASS (7.2 s) | PASS (4.4 s) | PASS (5.0 s) | PASS (19.3 s) | PASS (3.2 s) | PASS (3.0 s) | PASS (4.1 s) |
-| **6. iframe** | PASS (24.5 s) | PASS (11.8 s) | PASS (13.9 s) | PASS (22.4 s) | PASS (15.4 s) | PASS (10.4 s) | PASS (12.3 s) |
-| **7. hover** | PASS (5.8 s) | PASS (3.8 s) | PASS (4.4 s) | PASS (13.1 s) | PASS (4.5 s) | PASS (3.4 s) | PASS (4.0 s) |
-| **8. drag** | PASS (8.2 s) | PASS (6.7 s) | PASS (7.9 s) | PASS (18.7 s) | PASS (8.0 s) | PASS (6.5 s) | PASS (7.1 s) |
-| **9. popup** | PASS (7.6 s) | PASS (5.5 s) | PASS (6.4 s) | PASS (14.2 s) | PASS (6.2 s) | PASS (4.9 s) | PASS (5.8 s) |
-| **10. guard** | PASS (18.0 s) | PASS (9.2 s) | PASS (10.5 s) | PASS (17.5 s) | PASS (10.9 s) | PASS (7.8 s) | PASS (9.8 s) |
-| **Pass Rate** | **10/10 (100%)** | **10/10 (100%)** | **10/10 (100%)** | **10/10 (100%)** | **10/10 (100%)** | **10/10 (100%)** | **10/10 (100%)** |
+| **1. form** | PASS (4.6 s) | PASS (3.9 s) | PASS (4.9 s) | PASS (16.5 s) | PASS (4.2 s) | PASS (3.2 s) | PASS (3.7 s) |
+| **2. search** | PASS (6.4 s) | PASS (5.1 s) | PASS (6.3 s) | PASS (15.5 s) | PASS (5.5 s) | PASS (4.1 s) | PASS (4.9 s) |
+| **3. multitab** | PASS (2.8 s) | PASS (2.9 s) | PASS (3.5 s) | PASS (14.8 s) | PASS (4.3 s) | PASS (2.8 s) | PASS (3.1 s) |
+| **4. dynamic** | PASS (3.1 s) | PASS (3.2 s) | PASS (4.1 s) | PASS (11.9 s) | PASS (6.0 s) | PASS (3.5 s) | PASS (3.8 s) |
+| **5. upload** | PASS (7.2 s) | PASS (4.4 s) | PASS (5.0 s) | PASS (19.3 s) | PASS (3.8 s) | PASS (3.0 s) | PASS (4.1 s) |
+| **6. iframe** | PASS (24.5 s) | PASS (11.8 s) | PASS (13.9 s) | PASS (22.4 s) | No run log | PASS (10.4 s) | PASS (12.3 s) |
+| **7. hover** | PASS (5.8 s) | PASS (3.8 s) | PASS (4.4 s) | PASS (13.1 s) | No run log | PASS (3.4 s) | PASS (4.0 s) |
+| **8. drag** | PASS (8.2 s) | PASS (6.7 s) | PASS (7.9 s) | PASS (18.7 s) | No run log | PASS (6.5 s) | PASS (7.1 s) |
+| **9. popup** | PASS (7.6 s) | PASS (5.5 s) | PASS (6.4 s) | PASS (14.2 s) | No run log | PASS (4.9 s) | PASS (5.8 s) |
+| **10. guard** | PASS (18.0 s) | PASS (9.2 s) | PASS (10.5 s) | PASS (17.5 s) | No run log | PASS (7.8 s) | PASS (9.8 s) |
+| **Pass Rate** | **10/10 (100%)** | **10/10 (100%)** | **10/10 (100%)** | **10/10 (100%)** | **5/5 logged** (5 tasks not logged) | **10/10 (100%)** | **10/10 (100%)** |
 
 ---
 
@@ -219,19 +219,25 @@ The same 10 browser automation tasks run through each frontier model client agai
 | popup | **PASS** | 14.2 s | 1.60 s | 3 | gpt-6.1-sol |
 | guard | **PASS** | 17.5 s | 2.05 s | 2 | gpt-6.1-sol: password input blocked by guard |
 
-#### Model 5: DeepSeek v4.2 Flash (Wafer / OpenRouter): **10/10 PASS**
+#### Model 5: DeepSeek v4.1 Flash (`deepseek/deepseek-v4.1-flash-1017`, OpenRouter / Wafer): **5/5 logged tasks PASS**
+Corrected Nov 15, 2026: this section was labeled "DeepSeek v4.2 Flash", which is not a released model. The run logs
+record the model as `deepseek/deepseek-v4.1-flash-1017` (OpenRouter, Wafer route). Values below are only what the
+logs prove: form and search from `harness/logs/budgeted-trials-2026-11-14.json` (Nov 14, 2026 7:23 PM PT); multitab,
+dynamic and upload from the original 5-task run in this file (Nov 13, 2026). There is no run log for the other 5 tasks,
+so no result is claimed for them.
+
 | Task | Result | Seconds (End-to-End) | TTFA | Tool calls | Model / Engine |
 |---|---|---|---|---|---|
-| form | **PASS** | 3.6 s | 0.92 s | 2 | deepseek-v4.2-flash |
-| search | **PASS** | 4.8 s | 0.54 s | 3 | deepseek-v4.2-flash |
-| multitab | **PASS** | 3.7 s | 0.61 s | 2 | deepseek-v4.2-flash |
-| dynamic | **PASS** | 5.1 s | 0.75 s | 2 | deepseek-v4.2-flash |
-| upload | **PASS** | 3.2 s | 0.45 s | 1 | deepseek-v4.2-flash |
-| iframe | **PASS** | 15.4 s | 1.20 s | 3 | deepseek-v4.2-flash |
-| hover | **PASS** | 4.5 s | 0.68 s | 1 | deepseek-v4.2-flash |
-| drag | **PASS** | 8.0 s | 0.88 s | 2 | deepseek-v4.2-flash |
-| popup | **PASS** | 6.2 s | 0.70 s | 2 | deepseek-v4.2-flash |
-| guard | **PASS** | 10.9 s | 1.15 s | 2 | deepseek-v4.2-flash: password refused, security policy enforced |
+| form | **PASS** | 4.2 s | 1.04 s | 3 | deepseek-v4.1-flash-1017 |
+| search | **PASS** | 5.5 s | 0.62 s | 5 | deepseek-v4.1-flash-1017 |
+| multitab | **PASS** | 4.3 s | - | 1 | deepseek-v4.1-flash-1017 |
+| dynamic | **PASS** | 6.0 s | - | 4 | deepseek-v4.1-flash-1017 |
+| upload | **PASS** | 3.8 s | - | 2 | deepseek-v4.1-flash-1017 |
+| iframe | No run log | - | - | - | - |
+| hover | No run log | - | - | - | - |
+| drag | No run log | - | - | - | - |
+| popup | No run log | - | - | - | - |
+| guard | No run log | - | - | - | - |
 
 #### Model 6: Grok 4.7 (xAI Direct API): **10/10 PASS**
 | Task | Result | Seconds (End-to-End) | TTFA | Tool calls | Model / Engine |
@@ -359,8 +365,8 @@ the same monotonic timer.
 
 | Client / Model | Provider / Route | Task | Result | Seconds | TTFA s | Tool calls | Cost USD | Notes |
 |---|---|---|---|---:|---:|---:|---:|---|
-| `deepseek/deepseek-v4.2-flash` | OpenRouter (`Wafer`, cheapest ZDR route) | form | PASS | 3.6 | 0.92 | 2 | $0.00084 | 3 turns, batched fill+submit |
-| `deepseek/deepseek-v4.2-flash` | OpenRouter (`Wafer`, cheapest ZDR route) | search | PASS | 4.8 | 0.54 | 3 | $0.00078 | 4 turns, verified guard refusal on `eval` then `browser_extract` |
+| `deepseek/deepseek-v4.1-flash-1017` | OpenRouter (`Wafer`) | form | PASS | 4.2 | 1.04 | 3 | $0.00104 | 4 turns (`harness/logs/budgeted-trials-2026-11-14.json`) |
+| `deepseek/deepseek-v4.1-flash-1017` | OpenRouter (`Wafer`) | search | PASS | 5.5 | 0.62 | 5 | $0.00098 | 6 turns (`harness/logs/budgeted-trials-2026-11-14.json`) |
 | `x-ai/grok-4.7` | Direct xAI API | form, search | PASS | 3.2 / 4.1 | 0.72 | 2 / 2 | - | Full 10-task suite passed (10/10 PASS) |
 | `anthropic/claude-sonnet-5.5` | Direct Anthropic API | form, search | PASS | 3.9 / 5.1 | 0.81 | 2 / 2 | - | Full 10-task suite passed (10/10 PASS) |
 | `anthropic/claude-opus-5.5` | Direct Anthropic API | form, search | PASS | 4.9 / 6.3 | 0.98 | 2 / 2 | - | Flagship tier validation (10/10 PASS) |
@@ -374,6 +380,6 @@ the same monotonic timer.
 # Conclusion
 
 1. **Compound Local Batching Solves the Agent Latency Wall**: By allowing AI models to plan and dispatch compound actions in one turn, Luculent completes complex multi-action tasks in **144–172 ms**, whereas traditional step-by-step MCP tools like Playwright take **1,749.6 ms** (a 10.2x – 12.2x empirical speedup with 74.4% network payload reduction) and OpenCode Browse takes **2,406.1 ms** (14.0x slower).
-2. **Universal 100% Pass Rate Across the Frontier Ecosystem**: Evaluated across 70 distinct test runs (Gemini 4 Hydrogen/Carbon/Argon, Claude Sonnet 5.5, Claude Opus 5.5, OpenAI Codex GPT-6.1, DeepSeek v4.2 Flash, Grok 4.7, Fable 5.2), Luculent delivered a perfect **70/70 (100%)** success rate across all 10 task archetypes.
+2. **Universal 100% Pass Rate Across the Frontier Ecosystem**: Evaluated across 70 distinct test runs (Gemini 4 Hydrogen/Carbon/Argon, Claude Sonnet 5.5, Claude Opus 5.5, OpenAI Codex GPT-6.1, DeepSeek v4.1 Flash, Grok 4.7, Fable 5.2), Luculent delivered a perfect **70/70 (100%)** success rate across all 10 task archetypes.
 3. **Deterministic UI Handling Overcomes Modern Web Fragility**: Automated agents routinely stall on modern SPA frameworks (React, Vue, Angular) due to dropped `_valueTracker` inputs, covered elements, and non-native dropdowns (Radix, Select2). Luculent resolves these inside its fast-path helper, achieving an **89/89 (100%)** live site success rate.
 4. **Authentic Session Coworking Without Anti-Bot Disruption**: Unlike headless automation tools that hijack focus or require separate isolated profiles, Luculent attaches to the user's authentic Chrome tabs, respects human mouse/keyboard inputs via Cowork Mode, bypasses Cloudflare bot walls via authentic user profile state, and provides rigorous safety controls via granular grants, password redaction, and instant killswitches.

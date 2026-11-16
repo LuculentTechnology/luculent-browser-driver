@@ -126,6 +126,43 @@ async function playwrightFlows(u) {
   return out;
 }
 
+// Cold start: spawn the MCP server, initialize, launch a fresh headless browser and load about:blank, until the first
+// navigation returns. Each sample is a brand-new MCP process and browser; median of ITERS samples after 1 warm-up.
+async function coldStartLbd(port, token) {
+  const samples = [];
+  for (let i = 0; i < ITERS + 1; i++) {
+    const t = performance.now();
+    const c = new McpClient(process.execPath, [resolve(here, '..', 'src', 'cli.mjs'), 'mcp', '--port', String(port)], { LBD_KEY: token });
+    await c.init();
+    const l = await c.call('browser_headless', { action: 'launch' });
+    const tab = /tab (\S+)/.exec(l.text)[1];
+    const browser = /launched (\S+?),? /.exec(l.text)?.[1];
+    await c.call('browser_run', { tab, steps: [{ action: 'navigate', url: 'about:blank' }], snapshot: 'none' });
+    const ms = performance.now() - t;
+    try { await c.call('browser_headless', { action: 'close', browser }); } catch (_) {}
+    c.close();
+    await sleep(300);
+    if (i > 0) samples.push(ms);
+  }
+  return median(samples);
+}
+async function coldStartPlaywright() {
+  const cli = resolve(here, '..', 'node_modules', '@playwright', 'mcp', 'cli.js');
+  if (!existsSync(cli)) return NaN;
+  const samples = [];
+  for (let i = 0; i < ITERS + 1; i++) {
+    const t = performance.now();
+    const c = new McpClient(process.execPath, [cli, '--headless', '--isolated', '--browser', 'chrome'], {});
+    await c.init();
+    await c.call('browser_navigate', { url: 'about:blank' });
+    const ms = performance.now() - t;
+    try { await c.call('browser_close', {}); } catch (_) {}
+    c.close();
+    await sleep(300);
+    if (i > 0) samples.push(ms);
+  }
+  return median(samples);
+}
 const fx = await startFixtures();
 const keys = new KeyStore(mkdtempSync(join(tmpdir(), 'lbd-bench-')));
 // Default security settings, except the rate limit: the per-action flow fires ~7 calls in 40 ms, which no model-driven
@@ -154,6 +191,10 @@ if (!argv.includes('--no-extension') && findPlaywrightChromium()) {
   } else results.lbdExtension = { error: 'extension did not connect' };
 }
 
+if (!argv.includes('--no-cold')) {
+  results.coldStart = { lbdHeadlessMs: await coldStartLbd(relay.port, key) };
+  if (!argv.includes('--no-playwright')) results.coldStart.playwrightMcpMs = await coldStartPlaywright();
+}
 if (!argv.includes('--no-playwright')) {
   try { results.playwrightMcp = await playwrightFlows(fx.url); } catch (e) { results.playwrightMcp = { error: e.message }; }
 }
