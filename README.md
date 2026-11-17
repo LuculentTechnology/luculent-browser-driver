@@ -64,16 +64,18 @@ If you only want in-browser testing, install the extension from the **[Chrome We
 To let external AI agents control your browser tabs over MCP or HTTP, connect Chrome to the local agent relay:
 
 1. **Install the Extension**: From the **[Chrome Web Store](https://chromewebstore.google.com/search/Luculent%20Browser%20Driver%20for%20AI%20Agents)** (or load unpacked).
-2. **Start the Relay**: Run the 1-line auto-installer (automatically configures the portable runtime in the background if Node is not on your machine):
-   - **Windows (PowerShell)**:
-     ```powershell
-     irm https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.ps1 | iex
-     ```
-   - **macOS / Linux (Terminal)**:
-     ```bash
-     curl -fsSL https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.sh | bash
-     ```
-   - *Already have Node/npx?* `npx luculent-browser-driver start`
+2. **Start the Relay**:
+   - **Option 1 (Consumer / 1-Click — Recommended)**: Download and run the standalone **[Companion App (.exe / zip)](https://github.com/LuculentTechnology/luculent-browser-driver/releases/latest)** directly from the extension popup or releases page. It packages the relay and portable runtime—zero terminal commands or manual Node installation needed.
+   - **Option 2 (Terminal Auto-Installer — for developers)**:
+     - **Windows (PowerShell)**:
+       ```powershell
+       irm https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.ps1 | iex
+       ```
+     - **macOS / Linux (Terminal)**:
+       ```bash
+       curl -fsSL https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.sh | bash
+       ```
+   - **Option 3 (Existing Node / npx)**: `npx luculent-browser-driver start`
 3. **Grant Tab**: Open the extension icon on your target tab and click **Let agents use this tab**.
 4. **Connect Agent**: Point your agent's MCP config to `http://127.0.0.1:47800/mcp`.
 

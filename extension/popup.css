@@ -42,6 +42,61 @@ body.driver-popup {
 .driver-connection[data-state="connected"]::before { background: var(--ok); }
 .driver-connection[data-state="stopped"]::before, .driver-connection[data-state="untrusted"]::before { background: var(--danger); }
 .driver-card { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.relay-helper {
+  display: grid;
+  gap: 10px;
+  border-color: var(--line-gold);
+  background: var(--surface);
+}
+.relay-helper-sub {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.relay-download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 14px;
+  border-radius: var(--radius-btn);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+.relay-advanced-details {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.relay-advanced-details summary {
+  cursor: pointer;
+  user-select: none;
+}
+.relay-terminal-box {
+  margin-top: 8px;
+  display: grid;
+  gap: 4px;
+}
+.relay-term-title {
+  color: var(--paper);
+  font-weight: 500;
+}
+.relay-terminal-box code {
+  display: block;
+  padding: 6px 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  word-break: break-all;
+  user-select: all;
+  color: var(--paper);
+}
 .driver-identity h2 { margin: 0; font-size: 14px; overflow-wrap: anywhere; }
 .driver-identity p { margin: 2px 0 0; font-size: 11.5px; overflow-wrap: anywhere; }
 .driver-popup button { margin: 0; min-height: 34px; font-size: 12px; }

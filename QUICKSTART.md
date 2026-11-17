@@ -18,8 +18,11 @@ If you only need in-browser Click Testing, Visual Checks, or Code Diagnostics:
 ### Scenario B: Connecting External AI Agents (Claude, Cursor, Codex, Gemini)
 To allow external agents outside Chrome to drive your browser over MCP or HTTP, start the local relay:
 
-#### 1-Line Zero-Dependency Auto-Installer (Recommended)
-Automatically configures the portable background runtime (no manual Node installation required), sets up the relay, and mints your API key:
+#### Option 1: 1-Click Companion (.exe / zip) — Recommended for Consumers
+Download and run the standalone **[Companion App (.exe / zip)](https://github.com/LuculentTechnology/luculent-browser-driver/releases/latest)** directly from the extension popup or releases page. It packages the relay and portable runtime with zero terminal commands or manual Node installation needed.
+
+#### Option 2: 1-Line Zero-Dependency Auto-Installer (Terminal)
+Automatically configures the portable background runtime, sets up the relay, and mints your API key:
 
 **Windows (PowerShell):**
 ```powershell

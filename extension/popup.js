@@ -117,6 +117,8 @@ async function refresh() {
     $('st').dataset.state = state;
     $('st').textContent = { stopped: 'Agents stopped', untrusted: 'Untrusted relay', connected: 'Relay connected', offline: 'Relay offline' }[state];
     $('rc').hidden = state !== 'offline';
+    const offlineHelper = $('relayOfflineCard');
+    if (offlineHelper) offlineHelper.hidden = state === 'connected';
     const all = s.settings?.grantMode === 'all';
     const granted = s.granted.includes(tabId);
     $('grant').disabled = tabId == null || all;

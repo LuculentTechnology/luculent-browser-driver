@@ -36,6 +36,24 @@
         <span class="driver-label">This tab</span>
         <span id="st" class="driver-connection" data-state="offline">Connecting</span>
       </div>
+      <section id="relayOfflineCard" class="driver-card relay-helper" hidden>
+        <div class="relay-helper-head">
+          <h2 class="driver-label">Local Agent Relay Required</h2>
+          <p class="relay-helper-sub">To connect external AI agents (Claude, Cursor, Codex), run the companion relay on your machine.</p>
+        </div>
+        <div class="relay-helper-actions">
+          <a id="downloadCompanionBtn" href="https://github.com/LuculentTechnology/luculent-browser-driver/releases/latest" target="_blank" rel="noopener noreferrer" class="btn-gold relay-download-btn">Download Companion (.exe)</a>
+        </div>
+        <details class="relay-advanced-details">
+          <summary>Advanced: Terminal install</summary>
+          <div class="relay-terminal-box">
+            <span class="relay-term-title">PowerShell (Windows):</span>
+            <code>irm https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.ps1 | iex</code>
+            <span class="relay-term-title">Terminal (macOS/Linux):</span>
+            <code>curl -fsSL https://raw.githubusercontent.com/LuculentTechnology/luculent-browser-driver/main/scripts/install.sh | bash</code>
+          </div>
+        </details>
+      </section>
       <section class="driver-card driver-current" aria-labelledby="agent">
         <div class="driver-identity">
           <div>
