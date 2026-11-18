@@ -55,17 +55,33 @@ transport, both headless. Median of 7 runs; no model is involved. Full method: [
 
 ## Quickstart
 
+The [v0.3.0 release](https://github.com/LuculentTechnology/luculent-browser-driver/releases/tag/v0.3.0) publishes two ZIPs:
+
+| Asset | What it is |
+| --- | --- |
+| [`luculent-browser-driver-0.3.0.zip`](https://github.com/LuculentTechnology/luculent-browser-driver/releases/download/v0.3.0/luculent-browser-driver-0.3.0.zip) | The Chrome extension. Unzip it and load the folder unpacked at `chrome://extensions`. |
+| [`luculent-local-relay-0.3.0-windows-x64.zip`](https://github.com/LuculentTechnology/luculent-browser-driver/releases/download/v0.3.0/luculent-local-relay-0.3.0-windows-x64.zip) | Optional, fully local Windows relay. It bundles its own Node runtime and an `lbd.cmd` launcher, so no Node or npm install is needed. It also contains the extension in `driver/extension`. |
+
+A Chrome Web Store listing has not been verified for this release, so install the extension from the published ZIP.
+
 Choose your setup based on what you need:
 
 ### Scenario A: In-Browser Diagnostics & Testing (Zero Extra Software)
-If you only want in-browser testing, install the extension from the **[Chrome Web Store](https://chromewebstore.google.com/search/Luculent%20Browser%20Driver%20for%20AI%20Agents)**. Open the extension popup on any tab to run Click Tests, Visual Checks, and Code Audits directly in Chrome. **No relay, Node, or background processes required.**
+If you only want in-browser testing, unzip [`luculent-browser-driver-0.3.0.zip`](https://github.com/LuculentTechnology/luculent-browser-driver/releases/download/v0.3.0/luculent-browser-driver-0.3.0.zip), open `chrome://extensions`, turn on **Developer mode** and click
+**Load unpacked** on the unzipped folder. Open the extension popup on any tab to run Click Tests, Visual Checks, and Code Audits directly in Chrome. **No relay, Node, or background processes required.**
 
 ### Scenario B: Driving Chrome with External AI Agents (Claude, Cursor, Codex, Gemini)
 To let external AI agents control your browser tabs over MCP or HTTP, connect Chrome to the local agent relay:
 
-1. **Install the Extension**: From the **[Chrome Web Store](https://chromewebstore.google.com/search/Luculent%20Browser%20Driver%20for%20AI%20Agents)** (or load unpacked).
+1. **Install the Extension**: Load it unpacked from a published ZIP (see the table above) or from the `extension`
+   folder of a clone. The relay trusts the fixed ID of the `extension` folder and of `driver/extension` in the Windows
+   relay ZIP. The standalone extension ZIP gets a different ID, so add it with `LBD_EXTENSION_IDS=<id>` if you use it
+   with a relay.
 2. **Start the Relay**:
-   - **Option 1 (Consumer / 1-Click — Recommended)**: Download and run the standalone **[Companion App (.exe / zip)](https://github.com/LuculentTechnology/luculent-browser-driver/releases/latest)** directly from the extension popup or releases page. It packages the relay and portable runtime—zero terminal commands or manual Node installation needed.
+   - **Option 1 (Windows, no Node install — Recommended)**: Download [`luculent-local-relay-0.3.0-windows-x64.zip`](https://github.com/LuculentTechnology/luculent-browser-driver/releases/download/v0.3.0/luculent-local-relay-0.3.0-windows-x64.zip), unzip it and run
+     `.\lbd.cmd start` in PowerShell from that folder. The ZIP bundles the relay and its Node runtime, so nothing else
+     needs to be installed. Load `driver/extension` from the same folder unpacked, then mint a key in a second window
+     with `.\lbd.cmd keys mint --name my-agent --scopes read,act,tabs`. There is no `.exe` installer.
    - **Option 2 (Terminal Auto-Installer — for developers)**:
      - **Windows (PowerShell)**:
        ```powershell
