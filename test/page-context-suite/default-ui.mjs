@@ -8,8 +8,8 @@ import { execFileSync, spawnSync } from 'node:child_process';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const extSrc = resolve(here, '..', '..', 'extension');
-const installDir = process.env.LBD_INSTALL_DIR || 'D:\\Luculent\\browser-driver-install\\0.3.0';
-const zipPath = process.env.LBD_INSTALL_ZIP || 'D:\\Luculent\\browser-driver-install\\luculent-browser-driver-0.3.0.zip';
+const installDir = process.env.LBD_INSTALL_DIR || 'D:\\Luculent\\browser-driver-install\\0.4.0';
+const zipPath = process.env.LBD_INSTALL_ZIP || 'D:\\Luculent\\browser-driver-install\\luculent-browser-driver-0.4.0.zip';
 const proofs = process.env.LBD_PROOFS || 'D:\\Luculent\\ops\\state\\driver03-proofs';
 const keyPath = process.env.LBD_KEY_PATH || join(process.env.USERPROFILE || process.env.HOME || '', '.luculent', 'browser-driver', 'keys', 'default.key');
 const helper = join(here, 'default_chrome.py');

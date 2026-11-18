@@ -26,7 +26,7 @@ import { runInPageAudit } from '../extension/testing.js';
 
 import { PolicyStore, RateLimiter, effective, normalize, urlBlocked, hasUrlScheme, CAPS } from './policy.mjs';
 
-export const VERSION = '0.3.0';
+export const VERSION = '0.4.0';
 export const DEFAULT_PORT = 47800;
 // Stable ID derived from the "key" in extension/manifest.json.
 export const EXTENSION_ID = 'oddcfadbpoapebpdmfbggiiibpbcpdoo';

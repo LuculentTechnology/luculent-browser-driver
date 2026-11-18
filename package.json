@@ -1,6 +1,6 @@
 {
   "name": "@luculent/browser-driver",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "Luculent Browser Driver for AI Agents: let any AI agent drive Chrome via a local API/MCP server. Fast batched actions, no reconnects, killswitch, per-tab grants, password guard.",
   "type": "module",

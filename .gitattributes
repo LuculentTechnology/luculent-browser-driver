@@ -1,0 +1,2 @@
+# Keep byte-sensitive source and documentation fixtures consistent across CI platforms.
+* text=auto eol=lf
