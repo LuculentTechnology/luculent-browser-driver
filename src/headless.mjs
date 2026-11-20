@@ -83,6 +83,8 @@ export class HeadlessBrowser {
       '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows',
       '--disable-features=Translate,MediaRouter,OptimizationHints,HttpsFirstBalancedModeAutoEnable,HttpsUpgrades', '--disable-sync', '--metrics-recording-only', '--password-store=basic', ...(headless && !args.some((a) => a.startsWith('--window-size')) ? ['--window-size=1366,900'] : []),
       ...(extensionPath ? [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`] : ['--disable-extensions']),
+      // Required on Linux CI runners (GitHub Actions, Docker) where the process runs as root or in a restricted sandbox.
+      ...(process.platform === 'linux' ? ['--no-sandbox', '--disable-setuid-sandbox'] : []),
       ...args, 'about:blank',
     ];
     const proc = spawn(chromePath, argv, { stdio: 'ignore', windowsHide: true, detached: false });
