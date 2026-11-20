@@ -287,7 +287,7 @@ export async function callTool(name, a, rpc) {
 export const SUPPORTED_PROTOCOLS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'];
 
 /** Handle one MCP JSON-RPC message. Returns a response object or null for notifications. */
-export async function handleMcp(msg, rpc, serverInfo = { name: 'luculent-browser-driver', title: 'Luculent Browser Driver for AI Agents', version: '0.3.0' }) {
+export async function handleMcp(msg, rpc, serverInfo = { name: 'luculent-browser-driver', title: 'Luculent Browser Driver for AI Agents', version: '0.4.0' }) {
   const { id, method, params } = msg;
   const reply = (result) => ({ jsonrpc: '2.0', id, result });
   const fail = (code, message) => ({ jsonrpc: '2.0', id, error: { code, message } });

@@ -10,16 +10,34 @@ agent --MCP/HTTP/WS + API key--> relay (127.0.0.1:47800) --WebSocket--> extensio
 
 ## 1. Quick Setup by Scenario
 
+The [v0.3.0 release](https://github.com/LuculentTechnology/luculent-browser-driver/releases/tag/v0.3.0) publishes two ZIPs:
+
+* [`luculent-browser-driver-0.3.0.zip`](https://github.com/LuculentTechnology/luculent-browser-driver/releases/download/v0.3.0/luculent-browser-driver-0.3.0.zip): the Chrome extension. Unzip it and load the folder unpacked.
+* [`luculent-local-relay-0.3.0-windows-x64.zip`](https://github.com/LuculentTechnology/luculent-browser-driver/releases/download/v0.3.0/luculent-local-relay-0.3.0-windows-x64.zip): the optional, fully local Windows relay. It bundles its own Node runtime and an `lbd.cmd` launcher, so no
+  Node or npm install is needed. It also contains the extension in `driver/extension`.
+
+A Chrome Web Store listing has not been verified for this release, so install the extension from the published ZIP.
+
 ### Scenario A: In-Browser Diagnostics & Testing (Zero Extra Software)
 If you only need in-browser Click Testing, Visual Checks, or Code Diagnostics:
-1. Install **Luculent Browser Driver for AI Agents** from the **[Chrome Web Store](https://chromewebstore.google.com/search/Luculent%20Browser%20Driver%20for%20AI%20Agents)** (or load unpacked).
+1. Unzip [`luculent-browser-driver-0.3.0.zip`](https://github.com/LuculentTechnology/luculent-browser-driver/releases/download/v0.3.0/luculent-browser-driver-0.3.0.zip) and load the folder unpacked (see [Load the extension into Chrome](#load-the-extension-into-chrome)).
 2. Open the extension popup on any tab to run tests directly inside Chrome. **No relay or background software required.**
 
 ### Scenario B: Connecting External AI Agents (Claude, Cursor, Codex, Gemini)
 To allow external agents outside Chrome to drive your browser over MCP or HTTP, start the local relay:
 
-#### Option 1: 1-Click Companion (.exe / zip) — Recommended for Consumers
-Download and run the standalone **[Companion App (.exe / zip)](https://github.com/LuculentTechnology/luculent-browser-driver/releases/latest)** directly from the extension popup or releases page. It packages the relay and portable runtime with zero terminal commands or manual Node installation needed.
+#### Option 1: Windows relay ZIP (no Node install) — Recommended for Windows
+Download [`luculent-local-relay-0.3.0-windows-x64.zip`](https://github.com/LuculentTechnology/luculent-browser-driver/releases/download/v0.3.0/luculent-local-relay-0.3.0-windows-x64.zip) and unzip it. It bundles the relay and its Node runtime; there is no `.exe` installer. From that
+folder in PowerShell:
+
+```powershell
+.\lbd.cmd start                                              # leave this window open
+.\lbd.cmd keys mint --name my-agent --scopes read,act,tabs   # in a second window
+.\lbd.cmd status
+```
+
+Load the bundled `driver/extension` folder unpacked so the relay trusts it by default. `lbd.cmd` accepts the same
+commands as `node src/cli.mjs` below.
 
 #### Option 2: 1-Line Zero-Dependency Auto-Installer (Terminal)
 Automatically configures the portable background runtime, sets up the relay, and mints your API key:
@@ -38,14 +56,16 @@ curl -fsSL https://raw.githubusercontent.com/LuculentTechnology/luculent-browser
 *Contributors developing from source can run `git clone https://github.com/LuculentTechnology/luculent-browser-driver && cd luculent-browser-driver && npm install`.*
 
 ### Load the extension into Chrome
-Install **Luculent Browser Driver for AI Agents** from the Chrome Web Store, or load it unpacked:
+Load **Luculent Browser Driver for AI Agents** unpacked:
 1. Open `chrome://extensions` and turn on **Developer mode** (top right).
-2. Click **Load unpacked** and pick the `extension` folder.
+2. Click **Load unpacked** and pick one of these folders: the unzipped [`luculent-browser-driver-0.3.0.zip`](https://github.com/LuculentTechnology/luculent-browser-driver/releases/download/v0.3.0/luculent-browser-driver-0.3.0.zip), `driver/extension` from the
+   Windows relay ZIP, or `extension` in a clone.
 3. Pin **Luculent Driver**. The badge shows nothing when connected, `off` when the relay is down and `STOP` after
    the killswitch. Tabs agents control show an **AI** badge.
 
-The unpacked build has a fixed ID (`oddcfadbpoapebpdmfbggiiibpbcpdoo`) that the relay trusts by default. For
-another build, add its ID with `LBD_EXTENSION_IDS=<id>`.
+The `extension` folder and `driver/extension` in the Windows relay ZIP have a fixed ID
+(`oddcfadbpoapebpdmfbggiiibpbcpdoo`) that the relay trusts by default. The standalone extension ZIP does not, so
+Chrome gives it a different ID. To use that build or any other with a relay, add its ID with `LBD_EXTENSION_IDS=<id>`.
 
 Want a throwaway browser instead of your main profile? `node src/cli.mjs chrome` opens a separate Chromium profile
 with the extension already loaded (uses Playwright's Chromium; branded Chrome 137+ blocks `--load-extension`).

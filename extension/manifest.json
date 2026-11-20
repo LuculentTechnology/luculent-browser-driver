@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Luculent Browser Driver for AI Agents",
-  "version": "0.3.0",
-  "description": "Let any AI agent drive Chrome via API/MCP \u2014 fast, secure, no reconnects. Killswitch, per-tab grants, password guard. Free.",
+  "version": "0.4.0",
+  "description": "Let any AI agent drive Chrome via API/MCP — fast, secure, no reconnects. Killswitch, per-tab grants, password guard. Free.",
   "homepage_url": "https://luculent.dev/beta",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA06AlwYA6e0YPocsCx8HBooy0XQCyERUZGYI5tG0LhULtEgHu2lsTQP/apQcf2CxNegUQRzEg7m2dHKhlQagEP2DU1n9vBCXkFb9C+oKrWPMecv/3lws+KDTSFuvPf8ibZtw6jbODcjJroUqvEtBcF7itTmxYgoQ1IWVh609+oNJ2Uk2QeLmhMmbepMWy94VNR103wQDMKRzoUiciBVfXosp4o/hCOx/rwmNJvV6BhSVKGAYU2eYu9I3AxrWat93gl6dfQ4liTjglplMw2QJnTUxd/WDZW7W5043qWLIp8VAzznnF3g3uZpqLWPZjvSPQX4WNRUfVmXi9+GNexzGw3wIDAQAB",
   "minimum_chrome_version": "125",
